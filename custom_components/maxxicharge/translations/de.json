@@ -1,5 +1,6 @@
 {
   "config": {
+    "flow_title": "Maxxicharge {name}",
     "step": {
       "user": {
         "title": "Willkommen bei Maxxicharge",
@@ -35,6 +36,10 @@
       "search": {
         "title": "CCU mit Home Assistant verbinden",
         "description": "**An der CCU (einmalig):**\n\n1. Öffne in der Maxxisun-App den Bereich **Smart Home Integration** (oder im Browser `http://IP-DER-CCU/integrations/mqtt`; die Seite hat keinen Login, nur im Heimnetz verwenden).\n2. „MQTT-Verbindung“ einschalten. Broker-Adresse: `{broker}`, Port: `{port}`.\n3. „Anmeldung“ einschalten. Benutzer: `{user}`, Passwort: `{password}`.\n4. **Speichern** tippen.\n\nVoraussetzung: Firmware 2.42.103 oder neuer (Lesen), 2.43 oder neuer zum Ändern. Klicke danach auf „Absenden“. Die Suche dauert bis zu 10 Sekunden."
+      },
+      "discovery_confirm": {
+        "title": "Neue CCU gefunden",
+        "description": "Die CCU `{ccu}` hat sich am Broker gemeldet. Soll sie eingerichtet werden?"
       },
       "mqtt_missing": {
         "title": "MQTT in Home Assistant einrichten",
@@ -86,6 +91,29 @@
     "step": {
       "init": {
         "title": "Maxxicharge-Optionen",
+        "menu_options": {
+          "connection": "Verbindungsdaten für die CCU anzeigen",
+          "settings": "Einstellungen (IP, alte Entities aufräumen)",
+          "password": "Passwort des eingebauten Brokers ändern"
+        }
+      },
+      "connection_embedded": {
+        "title": "Verbindungsdaten für die CCU",
+        "description": "Trage das in der Maxxisun-App unter **Smart Home Integration** ein (bei jeder CCU):\n\n- MQTT-Verbindung: **an**\n- Broker-Adresse: `{broker}`\n- Port: `{port}`\n- Anmeldung: **an**\n- Benutzername: `{user}`\n- Passwort: `{password}`\n\nDann **Speichern**. Ändert sich die Adresse von Home Assistant, musst du sie in der App anpassen."
+      },
+      "connection_ha": {
+        "title": "Verbindungsdaten für die CCU",
+        "description": "Trage das in der Maxxisun-App unter **Smart Home Integration** ein (bei jeder CCU):\n\n- MQTT-Verbindung: **an**\n- Broker-Adresse: `{broker}`\n- Port: `{port}`\n- Anmeldung: **an**\n- Benutzername und Passwort: die deines MQTT-Brokers (z. B. Mosquitto). Die kennt diese Integration nicht. Den Benutzer findest du unter Einstellungen → Personen → Benutzer oder in der Konfiguration deines Brokers.\n\nDann **Speichern**."
+      },
+      "password": {
+        "title": "Passwort ändern",
+        "description": "Das neue Passwort gilt sofort für den eingebauten Broker. **Alle CCUs** werden danach abgelehnt, bis du das neue Passwort in der Maxxisun-App bei jeder CCU einträgst (Smart Home Integration → Passwort → Speichern).",
+        "data": {
+          "broker_password": "Passwort (8–64 Zeichen: Buchstaben, Ziffern, _ . -)"
+        }
+      },
+      "settings": {
+        "title": "Maxxicharge-Optionen",
         "data": {
           "ip": "IP-Adresse der CCU (optional)",
           "cleanup": "Alte Autodiscovery-Entities"
@@ -97,7 +125,9 @@
       }
     },
     "error": {
-      "cannot_connect": "Unter dieser IP antwortet keine CCU (/api/live nicht erreichbar)."
+      "cannot_connect": "Unter dieser IP antwortet keine CCU (/api/live nicht erreichbar).",
+      "invalid_password": "Passwort ungültig (8–64 Zeichen: Buchstaben, Ziffern, _ . -).",
+      "port_in_use": "Der Port ist schon belegt (läuft hier schon ein MQTT-Broker?). Wähle einen anderen Port oder nutze das vorhandene MQTT."
     }
   },
   "selector": {
@@ -368,6 +398,10 @@
     "firmware_too_old": {
       "title": "CCU-Firmware zu alt zum Schreiben",
       "description": "Die CCU {ccu} hat Firmware {version}. Einstellungen lassen sich per MQTT erst ab Firmware 2.43 ändern. Lesen funktioniert weiterhin."
+    },
+    "client_rejected": {
+      "title": "CCU wird vom Broker abgelehnt",
+      "description": "Die CCU `{client}` kann sich nicht am Broker anmelden (Grund: {reason}). Prüfe in der Maxxisun-App unter Smart Home Integration Benutzer und Passwort. Die Daten findest du unter Einstellungen → Geräte & Dienste → Maxxicharge → Konfigurieren → Verbindungsdaten. Der Hinweis verschwindet, sobald sich die CCU anmelden kann."
     }
   },
   "exceptions": {

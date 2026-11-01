@@ -28,6 +28,7 @@ from .const import (
 )
 from .coordinator import MaxxiCoordinator
 from .discovery import async_collect, specs_from_json, specs_to_json
+from .watcher import async_start_watcher
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -94,6 +95,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MaxxiConfigEntry) -> boo
     await coordinator.async_start()
     entry.runtime_data = coordinator
     entry.async_on_unload(coordinator.async_stop)
+    entry.async_on_unload(await async_start_watcher(hass, entry, bus, prefix))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload))

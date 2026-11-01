@@ -153,6 +153,8 @@ class MiniBroker:
         self._retained: dict[str, bytes] = {}
         self._internal: list[tuple[str, Callable[[Msg], None]]] = []
         self._rejected: dict[str, tuple[float, str]] = {}
+        self.on_reject: Callable[[str, str], None] | None = None
+        self.on_connect: Callable[[str], None] | None = None
 
     # ---------- Lebenszyklus ----------
     async def async_start(self) -> None:
@@ -322,6 +324,11 @@ class MiniBroker:
                     "Benutzername" if why == "user" else "Passwort",
                     user.decode("utf-8", "replace")[:32] if user is not None else None,
                 )
+                if self.on_reject:
+                    try:
+                        self.on_reject(cid, why)
+                    except Exception:  # noqa: BLE001
+                        _LOGGER.exception("Fehler im Ablehnungs-Rückruf")
                 self._refuse(client, 5, 0x87)
                 return False
         if len(self._clients) >= MAX_CLIENTS and cid not in self._clients:
@@ -335,6 +342,12 @@ class MiniBroker:
         self._clients[cid] = client
         client.send(b"\x20\x03\x00\x00\x00" if level == 5 else b"\x20\x02\x00\x00")
         _LOGGER.info("MQTT-Client %s verbunden (Protokoll %s)", cid, level)
+        self._rejected.pop(cid, None)
+        if self.on_connect:
+            try:
+                self.on_connect(cid)
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception("Fehler im Verbindungs-Rückruf")
         return True
 
     def _on_publish(self, client: _Client, first: int, body: bytes) -> None:

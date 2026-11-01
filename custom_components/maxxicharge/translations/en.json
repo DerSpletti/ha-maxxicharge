@@ -1,5 +1,6 @@
 {
   "config": {
+    "flow_title": "Maxxicharge {name}",
     "step": {
       "user": {
         "title": "Welcome to Maxxicharge",
@@ -35,6 +36,10 @@
       "search": {
         "title": "Connect the CCU to Home Assistant",
         "description": "**At the CCU (one time):**\n\n1. In the Maxxisun app open **Smart Home Integration** (or `http://CCU-IP/integrations/mqtt` in a browser; the page has no login, use it only in your home network).\n2. Switch “MQTT connection” on. Broker address: `{broker}`, port: `{port}`.\n3. Switch “Login” on. User: `{user}`, password: `{password}`.\n4. Save.\n\nRequires firmware 2.42.103 or newer (reading) and 2.43 or newer to change settings. Then click “Submit”. The search takes up to 10 seconds."
+      },
+      "discovery_confirm": {
+        "title": "New CCU found",
+        "description": "The CCU `{ccu}` announced itself on the broker. Set it up?"
       },
       "mqtt_missing": {
         "title": "Set up MQTT in Home Assistant",
@@ -86,6 +91,29 @@
     "step": {
       "init": {
         "title": "Maxxicharge options",
+        "menu_options": {
+          "connection": "Show connection details for the CCU",
+          "settings": "Settings (IP, clean up old entities)",
+          "password": "Change password of the built-in broker"
+        }
+      },
+      "connection_embedded": {
+        "title": "Connection details for the CCU",
+        "description": "Enter this in the Maxxisun app under **Smart Home Integration** (for every CCU):\n\n- MQTT connection: **on**\n- Broker address: `{broker}`\n- Port: `{port}`\n- Login: **on**\n- User name: `{user}`\n- Password: `{password}`\n\nThen **Save**. If the address of Home Assistant changes you must update it in the app."
+      },
+      "connection_ha": {
+        "title": "Connection details for the CCU",
+        "description": "Enter this in the Maxxisun app under **Smart Home Integration** (for every CCU):\n\n- MQTT connection: **on**\n- Broker address: `{broker}`\n- Port: `{port}`\n- Login: **on**\n- User name and password: those of your MQTT broker (e.g. Mosquitto). This integration does not know them. You find the user under Settings → People → Users or in your broker configuration.\n\nThen **Save**."
+      },
+      "password": {
+        "title": "Change password",
+        "description": "The new password applies immediately to the built-in broker. **All CCUs** are rejected until you enter the new password in the Maxxisun app for each CCU (Smart Home Integration → Password → Save).",
+        "data": {
+          "broker_password": "Password (8–64 characters: letters, digits, _ . -)"
+        }
+      },
+      "settings": {
+        "title": "Maxxicharge options",
         "data": {
           "ip": "CCU IP address (optional)",
           "cleanup": "Old autodiscovery entities"
@@ -97,7 +125,9 @@
       }
     },
     "error": {
-      "cannot_connect": "No CCU answers at this IP (/api/live unreachable)."
+      "cannot_connect": "No CCU answers at this IP (/api/live unreachable).",
+      "invalid_password": "Invalid password (8–64 characters: letters, digits, _ . -).",
+      "port_in_use": "The port is already in use (is an MQTT broker already running here?). Choose another port or use the existing MQTT."
     }
   },
   "selector": {
@@ -368,6 +398,10 @@
     "firmware_too_old": {
       "title": "CCU firmware too old for writing",
       "description": "CCU {ccu} runs firmware {version}. Settings can only be changed via MQTT from firmware 2.43. Reading still works."
+    },
+    "client_rejected": {
+      "title": "CCU rejected by the broker",
+      "description": "The CCU `{client}` cannot log in to the broker (reason: {reason}). Check user and password in the Maxxisun app under Smart Home Integration. The details are under Settings → Devices & services → Maxxicharge → Configure → Connection details. This notice disappears as soon as the CCU can log in."
     }
   },
   "exceptions": {

@@ -10,6 +10,7 @@ from typing import Any
 from homeassistant.components import mqtt
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
+from homeassistant.helpers import issue_registry as ir
 
 from .broker import MiniBroker
 from .const import DOMAIN
@@ -72,11 +73,41 @@ class BrokerManager:
                 await b.async_stop()
                 self.broker = b = None
             if b is None:
-                b = MiniBroker(port, username, password)
-                await b.async_start()
-                self.broker = b
+                b = await self._start(port, username, password)
             self._owners.add(owner)
             return b
+
+    async def _start(self, port: int, username: str, password: str) -> MiniBroker:
+        b = MiniBroker(port, username, password)
+        b.on_reject = self._on_reject
+        b.on_connect = self._on_connect
+        await b.async_start()
+        self.broker = b
+        return b
+
+    async def async_replace(self, port: int, username: str, password: str) -> MiniBroker:
+        """Broker mit neuen Zugangsdaten neu starten (alle Besitzer bleiben erhalten)."""
+        async with self._lock:
+            if self.broker:
+                await self.broker.async_stop()
+                self.broker = None
+            return await self._start(port, username, password)
+
+    @callback
+    def _on_reject(self, client_id: str, reason: str) -> None:
+        ir.async_create_issue(
+            self.hass,
+            DOMAIN,
+            f"rejected_{client_id}",
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="client_rejected",
+            translation_placeholders={"client": client_id, "reason": reason},
+        )
+
+    @callback
+    def _on_connect(self, client_id: str) -> None:
+        ir.async_delete_issue(self.hass, DOMAIN, f"rejected_{client_id}")
 
     @callback
     def release(self, owner: str) -> None:

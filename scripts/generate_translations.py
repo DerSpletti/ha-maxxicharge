@@ -16,6 +16,19 @@ spec.loader.exec_module(const)
 
 TEXT = {
     "de": {
+        "o_conn": "Verbindungsdaten für die CCU anzeigen",
+        "o_set": "Einstellungen (IP, alte Entities aufräumen)",
+        "o_pw": "Passwort des eingebauten Brokers ändern",
+        "oc_title": "Verbindungsdaten für die CCU",
+        "oc_emb": "Trage das in der Maxxisun-App unter **Smart Home Integration** ein (bei jeder CCU):\n\n- MQTT-Verbindung: **an**\n- Broker-Adresse: `{broker}`\n- Port: `{port}`\n- Anmeldung: **an**\n- Benutzername: `{user}`\n- Passwort: `{password}`\n\nDann **Speichern**. Ändert sich die Adresse von Home Assistant, musst du sie in der App anpassen.",
+        "oc_ha": "Trage das in der Maxxisun-App unter **Smart Home Integration** ein (bei jeder CCU):\n\n- MQTT-Verbindung: **an**\n- Broker-Adresse: `{broker}`\n- Port: `{port}`\n- Anmeldung: **an**\n- Benutzername und Passwort: die deines MQTT-Brokers (z. B. Mosquitto). Die kennt diese Integration nicht. Den Benutzer findest du unter Einstellungen → Personen → Benutzer oder in der Konfiguration deines Brokers.\n\nDann **Speichern**.",
+        "op_title": "Passwort ändern",
+        "op_desc": "Das neue Passwort gilt sofort für den eingebauten Broker. **Alle CCUs** werden danach abgelehnt, bis du das neue Passwort in der Maxxisun-App bei jeder CCU einträgst (Smart Home Integration → Passwort → Speichern).",
+        "dc_title": "Neue CCU gefunden",
+        "dc_desc": "Die CCU `{ccu}` hat sich am Broker gemeldet. Soll sie eingerichtet werden?",
+        "flow_title": "Maxxicharge {name}",
+        "is_cr_title": "CCU wird vom Broker abgelehnt",
+        "is_cr_desc": "Die CCU `{client}` kann sich nicht am Broker anmelden (Grund: {reason}). Prüfe in der Maxxisun-App unter Smart Home Integration Benutzer und Passwort. Die Daten findest du unter Einstellungen → Geräte & Dienste → Maxxicharge → Konfigurieren → Verbindungsdaten. Der Hinweis verschwindet, sobald sich die CCU anmelden kann.",
         "wl_title": "Willkommen bei Maxxicharge",
         "wl_desc": "Diese Einrichtung verbindet deine Maxxisun-CCU(s) per MQTT mit Home Assistant und räumt die Werte auf.\n\n**Das brauchst du gleich:**\n- **IP-Adresse von Home Assistant:** `{ha_ip}`. Das ist die „Broker-Adresse“, die du an der CCU einträgst.\n- **Port:** meist `1883`.\n- **Benutzer und Passwort für MQTT:** Hast du schon MQTT (z. B. Mosquitto), nimm dessen Zugangsdaten, am besten von einem eigenen Benutzer nur für MQTT. Sonst legst du sie im nächsten Schritt für den eingebauten Broker selbst fest.\n- **Die Maxxisun-App** (Bereich „Smart Home Integration“) oder einen Browser im Heimnetz.\n- **CCU-Firmware** 2.42.103 oder neuer zum Lesen, 2.43 oder neuer zum Ändern von Einstellungen.\n\nDie IP-Adresse der CCU brauchst du nicht, die CCUs werden automatisch gefunden. Hast du schon MQTT in Home Assistant, nutze ich es. Sonst biete ich einen eingebauten Broker an, nichts muss installiert werden.",
         "user_title": "Maxxicharge einrichten",
@@ -75,6 +88,19 @@ TEXT = {
         "e_opt": "Ungültige Auswahl: {option}",
     },
     "en": {
+        "o_conn": "Show connection details for the CCU",
+        "o_set": "Settings (IP, clean up old entities)",
+        "o_pw": "Change password of the built-in broker",
+        "oc_title": "Connection details for the CCU",
+        "oc_emb": "Enter this in the Maxxisun app under **Smart Home Integration** (for every CCU):\n\n- MQTT connection: **on**\n- Broker address: `{broker}`\n- Port: `{port}`\n- Login: **on**\n- User name: `{user}`\n- Password: `{password}`\n\nThen **Save**. If the address of Home Assistant changes you must update it in the app.",
+        "oc_ha": "Enter this in the Maxxisun app under **Smart Home Integration** (for every CCU):\n\n- MQTT connection: **on**\n- Broker address: `{broker}`\n- Port: `{port}`\n- Login: **on**\n- User name and password: those of your MQTT broker (e.g. Mosquitto). This integration does not know them. You find the user under Settings → People → Users or in your broker configuration.\n\nThen **Save**.",
+        "op_title": "Change password",
+        "op_desc": "The new password applies immediately to the built-in broker. **All CCUs** are rejected until you enter the new password in the Maxxisun app for each CCU (Smart Home Integration → Password → Save).",
+        "dc_title": "New CCU found",
+        "dc_desc": "The CCU `{ccu}` announced itself on the broker. Set it up?",
+        "flow_title": "Maxxicharge {name}",
+        "is_cr_title": "CCU rejected by the broker",
+        "is_cr_desc": "The CCU `{client}` cannot log in to the broker (reason: {reason}). Check user and password in the Maxxisun app under Smart Home Integration. The details are under Settings → Devices & services → Maxxicharge → Configure → Connection details. This notice disappears as soon as the CCU can log in.",
         "wl_title": "Welcome to Maxxicharge",
         "wl_desc": "This setup connects your Maxxisun CCU(s) to Home Assistant via MQTT and tidies up the values.\n\n**You will need:**\n- **IP address of Home Assistant:** `{ha_ip}`. This is the “broker address” you enter at the CCU.\n- **Port:** usually `1883`.\n- **User and password for MQTT:** if you already have MQTT (e.g. Mosquitto) use its credentials, ideally from a dedicated MQTT-only user. Otherwise you choose them yourself in the next step for the built-in broker.\n- **The Maxxisun app** (“Smart Home Integration”) or a browser in your home network.\n- **CCU firmware** 2.42.103 or newer for reading, 2.43 or newer to change settings.\n\nYou do not need the CCU’s IP address, CCUs are found automatically. If Home Assistant already has MQTT I use it. Otherwise I offer a built-in broker, nothing has to be installed.",
         "user_title": "Set up Maxxicharge",
@@ -143,6 +169,7 @@ def build(lang: str) -> dict:
         entity.setdefault(item.platform, {})[item.key] = {"name": getattr(item, lang)}
     return {
         "config": {
+            "flow_title": t["flow_title"],
             "step": {
                 "user": {"title": t["wl_title"], "description": t["wl_desc"]},
                 "connect": {
@@ -162,6 +189,7 @@ def build(lang: str) -> dict:
                     "data": {"broker_port": t["em_port"], "broker_user": t["em_user"], "broker_password": t["em_pass"]},
                 },
                 "search": {"title": t["se_title"], "description": t["se_desc"]},
+                "discovery_confirm": {"title": t["dc_title"], "description": t["dc_desc"]},
                 "mqtt_missing": {"title": t["mq_title"], "description": t["mq_desc"]},
                 "no_ccu": {
                     "title": t["nc_title"],
@@ -199,11 +227,26 @@ def build(lang: str) -> dict:
             "step": {
                 "init": {
                     "title": t["opt_title"],
+                    "menu_options": {"connection": t["o_conn"], "settings": t["o_set"], "password": t["o_pw"]},
+                },
+                "connection_embedded": {"title": t["oc_title"], "description": t["oc_emb"]},
+                "connection_ha": {"title": t["oc_title"], "description": t["oc_ha"]},
+                "password": {
+                    "title": t["op_title"],
+                    "description": t["op_desc"],
+                    "data": {"broker_password": t["em_pass"]},
+                },
+                "settings": {
+                    "title": t["opt_title"],
                     "data": {"ip": t["ip"], "cleanup": t["opt_cleanup"]},
                     "data_description": {"ip": t["ip_d"], "cleanup": t["opt_cleanup_d"]},
-                }
+                },
             },
-            "error": {"cannot_connect": t["cannot_connect"]},
+            "error": {
+                "cannot_connect": t["cannot_connect"],
+                "invalid_password": t["invalid_password"],
+                "port_in_use": t["port_in_use"],
+            },
         },
         "selector": {
             "cleanup": {
@@ -211,7 +254,10 @@ def build(lang: str) -> dict:
             }
         },
         "entity": entity,
-        "issues": {"firmware_too_old": {"title": t["issue_title"], "description": t["issue_desc"]}},
+        "issues": {
+            "firmware_too_old": {"title": t["issue_title"], "description": t["issue_desc"]},
+            "client_rejected": {"title": t["is_cr_title"], "description": t["is_cr_desc"]},
+        },
         "exceptions": {
             "mqtt_not_ready": {"message": t["e_mqtt"]},
             "ccu_not_found": {"message": t["e_notfound"]},

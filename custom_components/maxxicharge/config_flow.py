@@ -159,6 +159,7 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
         self._emb: dict[str, Any] = {}
         self._pw = _random_password()
         self._found: dict[str, dict[str, Spec]] = {}
+        self._disc: dict[str, Any] = {}
         self._ph: dict[str, str] = {"broker": "?", "port": "1883", "user": "", "password": "", "rejected": "–", "connected": "–"}
 
     # ---------- Hilfen ----------
@@ -371,6 +372,23 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_integration_discovery(self, data: dict[str, Any]) -> ConfigFlowResult:
+        """Eine unbekannte CCU hat sich am Broker gemeldet (Hintergrund-Erkennung)."""
+        await self.async_set_unique_id(data[CONF_CCU_ID])
+        self._abort_if_unique_id_configured()
+        self._disc = dict(data)
+        self.context["title_placeholders"] = {"name": f"CCU {data[CONF_CCU_ID][-4:]}"}
+        return await self.async_step_discovery_confirm()
+
+    async def async_step_discovery_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is not None:
+            return self.async_create_entry(title=f"CCU {self._disc[CONF_CCU_ID][-4:]}", data=self._disc)
+        return self.async_show_form(
+            step_id="discovery_confirm",
+            data_schema=vol.Schema({}),
+            description_placeholders={"ccu": self._disc[CONF_CCU_ID]},
+        )
+
     async def async_step_ccu(self, data: dict[str, Any]) -> ConfigFlowResult:
         """Eintrag für eine CCU anlegen (auch von weiteren Flows genutzt)."""
         await self.async_set_unique_id(data[CONF_CCU_ID])
@@ -384,9 +402,74 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class MaxxiOptionsFlow(OptionsFlow):
-    """Nachträglich: IP des HTTP-Endpunkts ändern, alte Entities aufräumen."""
+    """Optionen: Verbindungsdaten ansehen, Passwort ändern, IP setzen, alte Entities aufräumen."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        options = ["connection", "settings"]
+        if self.config_entry.data.get(CONF_MODE) == MODE_EMBEDDED:
+            options.append("password")
+        return self.async_show_menu(step_id="init", menu_options=options)
+
+    async def async_step_connection(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if self.config_entry.data.get(CONF_MODE) == MODE_EMBEDDED:
+            return await self.async_step_connection_embedded()
+        return await self.async_step_connection_ha()
+
+    async def async_step_connection_embedded(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Zugangsdaten des eingebauten Brokers anzeigen (für die Maxxisun-App)."""
+        if user_input is not None:
+            return self.async_create_entry(data=dict(self.config_entry.options))
+        d = self.config_entry.data
+        return self.async_show_form(
+            step_id="connection_embedded",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "broker": await _host_ip(self.hass),
+                "port": str(d[CONF_BROKER_PORT]),
+                "user": d[CONF_BROKER_USER],
+                "password": d[CONF_BROKER_PASSWORD],
+            },
+        )
+
+    async def async_step_connection_ha(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Broker-Daten des vorhandenen MQTT anzeigen (Passwort kennt die Integration nicht)."""
+        if user_input is not None:
+            return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="connection_ha",
+            data_schema=vol.Schema({}),
+            description_placeholders=await _ha_broker_info(self.hass),
+        )
+
+    async def async_step_password(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Passwort des eingebauten Brokers ändern (gilt für alle CCUs)."""
+        errors: dict[str, str] = {}
+        entry = self.config_entry
+        if user_input is not None:
+            pw = user_input[CONF_BROKER_PASSWORD]
+            if not PW_RE.match(pw):
+                errors[CONF_BROKER_PASSWORD] = "invalid_password"
+            else:
+                try:
+                    await get_manager(self.hass).async_replace(
+                        entry.data[CONF_BROKER_PORT], entry.data[CONF_BROKER_USER], pw
+                    )
+                except OSError:
+                    errors["base"] = "port_in_use"
+                else:
+                    for e in self.hass.config_entries.async_entries(DOMAIN):
+                        if e.data.get(CONF_MODE) == MODE_EMBEDDED:
+                            self.hass.config_entries.async_update_entry(
+                                e, data={**e.data, CONF_BROKER_PASSWORD: pw}
+                            )
+                    return self.async_create_entry(data=dict(entry.options))
+        return self.async_show_form(
+            step_id="password",
+            data_schema=vol.Schema({vol.Required(CONF_BROKER_PASSWORD, default=_random_password()): str}),
+            errors=errors,
+        )
+
+    async def async_step_settings(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         entry = self.config_entry
         current_ip = entry.options.get(CONF_IP, entry.data.get(CONF_IP, ""))
@@ -400,7 +483,7 @@ class MaxxiOptionsFlow(OptionsFlow):
                 )
                 return self.async_create_entry(data={CONF_IP: ip})
         return self.async_show_form(
-            step_id="init",
+            step_id="settings",
             data_schema=vol.Schema(
                 {
                     vol.Optional(CONF_IP, default=current_ip): str,

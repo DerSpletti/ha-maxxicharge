@@ -57,6 +57,25 @@ Praxisbericht, es gibt keine offizielle Maxxisun-Doku dazu; die Feldnamen stimme
 4. Optional: Eintrag → Konfigurieren → **Alte Autodiscovery-Entities deaktivieren**. Danach zeigen Dashboards
    und Automationen auf die neuen Entities (die Entity-IDs ändern sich, siehe unten).
 
+## Weitere CCUs später hinzufügen
+- **Automatisch:** Solange mindestens eine CCU eingerichtet ist, lauscht die Integration auf neue
+  Meldungen am Broker. Meldet sich eine unbekannte CCU, erscheint unter Einstellungen → Geräte & Dienste
+  die Karte „Entdeckt: Maxxicharge CCU XXXX“. Ein Klick auf „Einrichten“ genügt.
+- **Manuell:** Integration hinzufügen → Maxxicharge. Der Assistent zeigt nur noch nicht eingerichtete CCUs.
+- Die neue CCU muss in der Maxxisun-App die gleichen Verbindungsdaten bekommen.
+- Wird eine CCU vom Broker abgelehnt (falsches Passwort), erscheint ein Hinweis unter Reparaturen.
+
+## Verbindungsdaten später nachlesen / Passwort ändern
+Eintrag → **Konfigurieren**:
+- **Verbindungsdaten für die CCU anzeigen:** Broker-Adresse, Port, Benutzer und Passwort (beim eingebauten
+  Broker), genau so, wie sie in der Maxxisun-App einzutragen sind.
+- **Passwort des eingebauten Brokers ändern:** gilt für alle CCUs. Danach muss es in der App bei jeder CCU
+  neu eingetragen werden.
+- Mit vorhandenem MQTT (z. B. Mosquitto) kennt die Integration das Passwort nicht. Dort gelten Benutzer und
+  Passwort deines Brokers (Einstellungen → Personen → Benutzer oder Broker-Konfiguration).
+Das Passwort steht nur in der HA-Konfiguration der Integration, im Diagnose-Download wird es geschwärzt
+und es taucht in keiner Entity auf.
+
 ## Updates
 Updates meldet **HACS**: Sobald im Repo ein neues Release (Tag `vX.Y.Z`, gleich der `version` in
 `manifest.json`) erscheint, zeigt Home Assistant unter Einstellungen → Updates (und in HACS) ein Update
