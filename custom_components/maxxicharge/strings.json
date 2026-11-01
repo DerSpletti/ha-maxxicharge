@@ -68,7 +68,7 @@
           "ip": "CCU IP address (optional)"
         },
         "data_description": {
-          "ip": "Used for the local endpoint http://<IP>/api/live and the device link."
+          "ip": "Used for model detection via the CCU’s local address (/api/info). Normally not needed, the CCU reports its own IP."
         }
       }
     },
@@ -124,7 +124,7 @@
           "cleanup": "Old autodiscovery entities"
         },
         "data_description": {
-          "ip": "Used for the local endpoint http://<IP>/api/live and the device link.",
+          "ip": "Used for model detection via the CCU’s local address (/api/info). Normally not needed, the CCU reports its own IP.",
           "model": "Normally detected automatically (V2 or V2+). Only change it if the CCU does not report a model.",
           "cleanup": "Disables the duplicate entities from the CCU autodiscovery (nothing is deleted) or re-enables them."
         }

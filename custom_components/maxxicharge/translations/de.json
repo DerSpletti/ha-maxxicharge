@@ -68,7 +68,7 @@
           "ip": "IP-Adresse der CCU (optional)"
         },
         "data_description": {
-          "ip": "Für den lokalen Endpunkt http://<IP>/api/live und den Link im Gerät."
+          "ip": "Wird für die Modellerkennung über die lokale Adresse der CCU (/api/info) genutzt. Normalerweise nicht nötig, die CCU meldet ihre IP selbst."
         }
       }
     },
@@ -124,7 +124,7 @@
           "cleanup": "Alte Autodiscovery-Entities"
         },
         "data_description": {
-          "ip": "Für den lokalen Endpunkt http://<IP>/api/live und den Link im Gerät.",
+          "ip": "Wird für die Modellerkennung über die lokale Adresse der CCU (/api/info) genutzt. Normalerweise nicht nötig, die CCU meldet ihre IP selbst.",
           "model": "Wird normalerweise automatisch erkannt (V2 oder V2+). Nur ändern, wenn die CCU kein Modell meldet.",
           "cleanup": "Deaktiviert die doppelten Entities der CCU-Autodiscovery (nichts wird gelöscht) oder aktiviert sie wieder."
         }

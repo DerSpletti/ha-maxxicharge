@@ -6,9 +6,10 @@
   ],
   "config_flow": true,
   "dependencies": [
-    "mqtt",
-    "http",
     "frontend",
+    "http",
+    "mqtt",
+    "network",
     "panel_custom"
   ],
   "documentation": "https://github.com/DerSpletti/ha-maxxicharge",
