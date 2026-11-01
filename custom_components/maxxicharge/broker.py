@@ -152,7 +152,7 @@ class MiniBroker:
         self._clients: dict[str, _Client] = {}
         self._retained: dict[str, bytes] = {}
         self._internal: list[tuple[str, Callable[[Msg], None]]] = []
-        self._rejected: dict[str, float] = {}
+        self._rejected: dict[str, tuple[float, str]] = {}
 
     # ---------- Lebenszyklus ----------
     async def async_start(self) -> None:
@@ -177,7 +177,7 @@ class MiniBroker:
     def recent_rejections(self, window: float = 120.0) -> list[str]:
         """Clients, die sich zuletzt mit falschem Benutzer/Passwort angemeldet haben."""
         now = time.monotonic()
-        return sorted(c for c, t in self._rejected.items() if now - t <= window)
+        return sorted(f"{c} ({why})" for c, (t, why) in self._rejected.items() if now - t <= window)
 
     # ---------- Interne API ----------
     def subscribe(self, flt: str, cb: Callable[[Msg], None]) -> Callable[[], None]:
@@ -295,20 +295,22 @@ class MiniBroker:
             will = (wtopic, wpayload, bool(flags & 0x20))
         user = r.bin() if flags & 0x80 else None
         pw = r.bin() if flags & 0x40 else None
-        if self.username and not (
-            user is not None
-            and pw is not None
-            and hmac.compare_digest(user, self.username.encode())
-            and hmac.compare_digest(pw, self.password.encode())
-        ):
-            self._rejected[cid] = time.monotonic()
-            _LOGGER.warning(
-                "MQTT-Anmeldung abgelehnt von Client %s: Benutzer oder Passwort stimmen nicht mit dem "
-                "eingebauten Broker überein (in der Maxxisun-App Benutzer und Passwort neu eintragen)",
-                cid,
-            )
-            self._refuse(client, 5, 0x87)
-            return False
+        if self.username:
+            user_ok = user is not None and hmac.compare_digest(user, self.username.encode())
+            pw_ok = pw is not None and hmac.compare_digest(pw, self.password.encode())
+            if not (user_ok and pw_ok):
+                why = "user" if not user_ok else "password"
+                self._rejected[cid] = (time.monotonic(), why)
+                _LOGGER.warning(
+                    "MQTT-Anmeldung abgelehnt von Client %s: %s stimmt nicht mit dem eingebauten Broker "
+                    "überein (empfangener Benutzername: %r). In der Maxxisun-App Benutzer und Passwort "
+                    "neu eintragen.",
+                    cid,
+                    "Benutzername" if why == "user" else "Passwort",
+                    user.decode("utf-8", "replace")[:32] if user is not None else None,
+                )
+                self._refuse(client, 5, 0x87)
+                return False
         if len(self._clients) >= MAX_CLIENTS and cid not in self._clients:
             self._refuse(client, 3, 0x88)
             return False
