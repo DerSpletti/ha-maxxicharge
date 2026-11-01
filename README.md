@@ -1,132 +1,147 @@
-# Maxxicharge – Maxxisun CCU2 für Home Assistant
+# Maxxicharge für Home Assistant
 
-Custom Integration für die **Maxxisun CCU2** (Maxxicharge V2+). Sie bindet die CCUs über MQTT an und
-räumt dabei auf: Die rund 69 Autodiscovery-Entities pro CCU werden zu einer übersichtlichen Auswahl
-(Hauptwerte, Energie, Einstellungen, Diagnose) mit deutschen Namen unter **einem** Gerät pro CCU.
+[![HACS: Benutzerdefiniert](https://img.shields.io/badge/HACS-Benutzerdefiniert-41BDF5.svg)](https://hacs.xyz)
+[![Version](https://img.shields.io/github/v/release/DerSpletti/ha-maxxicharge)](https://github.com/DerSpletti/ha-maxxicharge/releases)
+[![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-green.svg)](LICENSE)
 
-## Was sie macht
-- **Einrichtung per Assistent:** findet CCUs am Broker, du wählst sie aus (mehrere gleichzeitig möglich).
-- **Aufgeräumt:** Hauptwerte sichtbar, Einstellungen unter „Konfiguration“, Diagnose eingeklappt,
-  Rohwerte (Status-Bits, Meldezeiten, Alter, Wandler-Einzelwerte) standardmäßig deaktiviert.
-- **Sicheres Schreiben:** Max. Ausgangsleistung, Max. Ladeleistung, Min./Max.-Ladestand,
-  Leistung bei Zählerausfall, Ladestrategie, USV-Modus. Die Integration sendet, wartet bis zu 10 s auf
-  die Bestätigung der CCU und meldet sonst einen **Fehler im UI**. Angezeigt wird immer der echte Wert der CCU.
-- **Abgeleitet:** Speicher voll / leer, nutzbare Restenergie in kWh, Einspeisung ins Haus, AC-Aufnahme,
-  Netzbilanz und Batteriebilanz (Gesamt).
-- **Diagnose:** „Verbunden“, „Letztes Update“, Firmware, „Schreiben möglich“, Hinweis in den Reparaturen
-  bei Firmware < 2.43.
-- **Aufräumen der Altlasten:** Optional deaktiviert die Integration die doppelten Autodiscovery-Entities
-  (nichts wird gelöscht, jederzeit rückgängig).
+Inoffizielle Integration für die **Maxxisun CCU2** (Maxxicharge V2+) per MQTT. Sie bringt die CCUs mit einem
+geführten Assistenten in Home Assistant und stellt die rund 70 Werte pro CCU **aufgeräumt** dar: Hauptwerte,
+Energie, Einstellungen und Diagnose, mit deutschen Namen, unter einem Gerät pro CCU.
 
-Wichtig: Die Integration liest Topics, Templates, Einheiten und Optionen aus den **retained Discovery-Configs**
-der CCU. Es sind keine Topic-Namen fest eingebaut.
+*English version: [README.en.md](README.en.md)*
+
+> **Status: Beta.** Entwickelt und getestet mit zwei CCUs (Firmware 2.43.21 und 2.43.53) und dem eingebauten
+> Broker. Das Schreiben von Einstellungen und der Betrieb mit einem vorhandenen MQTT-Broker sind auf echter
+> Hardware noch wenig erprobt. Rückmeldungen sind willkommen (siehe [Fehler melden](#fehler-melden)).
+
+## Funktionen
+- **Geführte Einrichtung:** Der Assistent erklärt, was du brauchst, und findet die CCUs am Broker.
+  Ist in Home Assistant noch **kein MQTT** vorhanden, bringt die Integration einen eigenen kleinen Broker mit.
+  Es muss nichts zusätzlich installiert werden.
+- **Mehrere CCUs:** Jede CCU ist ein eigener Eintrag. Neue CCUs werden später automatisch als „Entdeckt“ angeboten.
+- **Aufgeräumt:** Hauptwerte sichtbar, Einstellungen unter „Konfiguration“, Diagnose eingeklappt, Rohwerte
+  (Status-Bits, Meldezeiten, Alter, Wandler-Einzelwerte) standardmäßig deaktiviert.
+- **Sicheres Schreiben:** Max. Ausgangs- und Ladeleistung, Lade-Grenzen, Leistung bei Zählerausfall,
+  Ladestrategie und USV-Modus. Die Integration sendet, wartet bis zu 10 Sekunden auf die Bestätigung der CCU
+  und meldet sonst einen **Fehler im UI**. Angezeigt wird immer der echte Wert der CCU.
+- **Abgeleitete Werte:** Speicher voll/leer, nutzbare Restenergie in kWh, Einspeisung ins Haus, AC-Aufnahme,
+  Netz- und Batteriebilanz.
+- **Diagnose:** „Verbunden“, „Letztes Update“, Firmware, „Schreiben möglich“, Hinweis unter *Reparaturen* bei
+  Firmware unter 2.43, Diagnose-Download mit geschwärzten Zugangsdaten.
+- **Ohne Abhängigkeiten:** keine Zusatzpakete, kein Cloud-Konto, alles lokal.
+
+## Voraussetzungen
+- Home Assistant 2025.1 oder neuer.
+- Maxxisun CCU2 mit Firmware **2.42.103** oder neuer (Lesen). **Einstellungen ändern geht erst ab 2.43.**
+- Die CCU und Home Assistant sind im selben Netz.
 
 ## Installation
-**HACS:** HACS → ⋮ → Benutzerdefinierte Repositories → Repo-URL, Kategorie *Integration* → „Maxxicharge“
-installieren → Home Assistant neu starten.
+**HACS (empfohlen):**
+[![Repository in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=DerSpletti&repository=ha-maxxicharge&category=integration)
+oder in HACS ⋮ → *Benutzerdefinierte Repositories* → `https://github.com/DerSpletti/ha-maxxicharge`, Kategorie
+*Integration*. Dann *Maxxicharge* herunterladen und Home Assistant neu starten.
 
-**Manuell:** Ordner `custom_components/maxxicharge` nach `<config>/custom_components/` kopieren, neu starten.
-
-## Einrichtung von null (ohne vorhandenes MQTT)
-Es muss **nichts zusätzlich installiert werden**: Ist in Home Assistant kein MQTT eingerichtet, bietet der
-Assistent den **eingebauten Broker** an. Er startet im Hintergrund der Integration (reines Python, keine
-Zusatzpakete), du legst nur Port, Benutzer und Passwort fest und trägst sie in der Maxxisun-App ein.
-Ist MQTT (z. B. Mosquitto) schon da, nutzt die Integration dieses MQTT und startet keinen eigenen Broker.
-Der eingebaute Broker ist bewusst klein: Login, Publish/Subscribe, Retained, Last Will, MQTT 3.1.1 und 5,
-keine Verschlüsselung, höchstens 20 Clients. Läuft auf Port 1883 schon ein anderer Broker, wähle einen
-anderen Port oder nutze diesen Broker.
-
-Der Assistent führt dich durch alles. Du brauchst nur Home Assistant und die CCU im selben Netz.
-1. **MQTT in Home Assistant:** Fehlt die MQTT-Integration, erklärt der Assistent, wie du das Add-on
-   *Mosquitto broker* installierst und die MQTT-Integration einrichtest, und prüft danach erneut.
-2. **CCU mit dem Broker verbinden:** Der Assistent zeigt Broker-Adresse und Port. In der Maxxisun-App öffnest du
-   **Smart Home Integration** (oder im Browser `http://<IP-DER-CCU>/integrations/mqtt`), schaltest „MQTT-Verbindung“ und „Anmeldung“ ein und trägst
-   Broker, Port 1883 sowie Benutzer und Passwort eines Home-Assistant-Benutzers ein (am besten ein eigener
-   Benutzer nur für MQTT). Speichern.
-3. **CCU finden:** Der Assistent lauscht am Broker und zeigt die gefundenen CCUs. Findet er keine, bekommt
-   er Hinweise zur Fehlersuche und kann erneut suchen.
-
-Hinweise: Benötigt Firmware ≥ 2.42.103 (Lesen), ≥ 2.43 zum Ändern. Die MQTT-Seite der CCU hat keinen
-Login und MQTT läuft unverschlüsselt: nur im Heimnetz betreiben. (Der CCU-Ablauf stammt aus einem
-Praxisbericht, es gibt keine offizielle Maxxisun-Doku dazu; die Feldnamen stimmen mit der Maxxisun-App überein.)
+**Manuell:** Ordner `custom_components/maxxicharge` nach `<config>/custom_components/` kopieren und neu starten.
 
 ## Einrichtung
-1. Einstellungen → Geräte & Dienste → Integration hinzufügen → **Maxxicharge**.
-2. Discovery-Präfix bestätigen (Standard `homeassistant`).
-3. Gefundene CCUs auswählen. Pro CCU entsteht ein Eintrag und ein Gerät „CCU XXXX“ (letzte 4 Zeichen der ID).
-4. Optional: Eintrag → Konfigurieren → **Alte Autodiscovery-Entities deaktivieren**. Danach zeigen Dashboards
-   und Automationen auf die neuen Entities (die Entity-IDs ändern sich, siehe unten).
+Einstellungen → Geräte & Dienste → **Integration hinzufügen → Maxxicharge**. Der Assistent führt dich durch:
 
-## Weitere CCUs später hinzufügen
-- **Automatisch:** Solange mindestens eine CCU eingerichtet ist, lauscht die Integration auf neue
-  Meldungen am Broker. Meldet sich eine unbekannte CCU, erscheint unter Einstellungen → Geräte & Dienste
-  die Karte „Entdeckt: Maxxicharge CCU XXXX“. Ein Klick auf „Einrichten“ genügt.
-- **Manuell:** Integration hinzufügen → Maxxicharge. Der Assistent zeigt nur noch nicht eingerichtete CCUs.
-- Die neue CCU muss in der Maxxisun-App die gleichen Verbindungsdaten bekommen.
-- Wird eine CCU vom Broker abgelehnt (falsches Passwort), erscheint ein Hinweis unter Reparaturen.
+1. **Willkommen:** zeigt, was du brauchst (IP von Home Assistant, Port, Benutzer, Passwort).
+2. **MQTT:** Hast du schon MQTT (z. B. Mosquitto), wird es genutzt. Sonst wählst du den **eingebauten Broker**
+   und legst Port, Benutzer und Passwort fest.
+3. **CCU verbinden:** In der Maxxisun-App unter **Smart Home Integration** (bei jeder CCU):
+   MQTT-Verbindung **an**, Broker-Adresse und Port wie angezeigt, Anmeldung **an**, Benutzer und Passwort
+   eintragen, **Speichern**. Das Passwortfeld nicht leer lassen, sonst bleibt das alte Passwort gespeichert.
+   (Alternativ im Browser: `http://<IP-DER-CCU>/integrations/mqtt`. Die Seite hat keinen Login, nur im Heimnetz verwenden.)
+4. **Suchen und auswählen:** Die gefundenen CCUs werden angezeigt, du wählst sie aus.
 
-## Verbindungsdaten später nachlesen / Passwort ändern
-Eintrag → **Konfigurieren**:
-- **Verbindungsdaten für die CCU anzeigen:** Broker-Adresse, Port, Benutzer und Passwort (beim eingebauten
-  Broker), genau so, wie sie in der Maxxisun-App einzutragen sind.
-- **Passwort des eingebauten Brokers ändern:** gilt für alle CCUs. Danach muss es in der App bei jeder CCU
-  neu eingetragen werden.
-- Mit vorhandenem MQTT (z. B. Mosquitto) kennt die Integration das Passwort nicht. Dort gelten Benutzer und
-  Passwort deines Brokers (Einstellungen → Personen → Benutzer oder Broker-Konfiguration).
-Das Passwort steht nur in der HA-Konfiguration der Integration, im Diagnose-Download wird es geschwärzt
-und es taucht in keiner Entity auf.
+Optional im Eintrag unter **Konfigurieren → Einstellungen**: die alten Autodiscovery-Entities der CCU
+**deaktivieren** (nichts wird gelöscht, jederzeit rückgängig).
 
-## Updates
-Updates meldet **HACS**: Sobald im Repo ein neues Release (Tag `vX.Y.Z`, gleich der `version` in
-`manifest.json`) erscheint, zeigt Home Assistant unter Einstellungen → Updates (und in HACS) ein Update
-für *Maxxicharge* an. Installieren, danach Home Assistant neu starten. Wer es automatisch will, kann eine
-Automation mit der Aktion `update.install` auf die Entity `update.maxxicharge_update` bauen (Neustart
-bleibt nötig). Die Entity-ID kann bei dir abweichen, sie steht in HACS bzw. unter Einstellungen → Updates.
+### Weitere CCUs später hinzufügen
+Die neue CCU in der App mit den gleichen Verbindungsdaten versehen. Sie erscheint automatisch unter
+*Geräte & Dienste* als „Entdeckt“. Alternativ die Integration noch einmal hinzufügen.
+
+### Verbindungsdaten später nachlesen
+Eintrag → **Konfigurieren → Verbindungsdaten für die CCU anzeigen** zeigt Broker, Port, Benutzer und Passwort
+genau so, wie sie in der App einzutragen sind. Dort kannst du auch das **Passwort ändern** (gilt für alle CCUs,
+danach muss es in der App bei jeder CCU neu eingetragen werden). Mit vorhandenem MQTT kennt die Integration das
+Passwort nicht: Es gelten Benutzer und Passwort deines Brokers.
+
+## Entities
+| Bereich | Beispiele |
+|---|---|
+| Hauptwerte | Ladestand, Nutzbare Restenergie, Batterie Lade-/Entladeleistung, CCU-Leistung (AC), Netzleistung, PV-Leistung, Betriebsmodus, Speicher voll/leer |
+| Energie | Abgabe/Aufnahme heute und gesamt, Netzbezug/-einspeisung, PV-Ertrag, Batterie geladen/entladen, Netz- und Batteriebilanz |
+| Konfiguration | Max. Ausgangsleistung, Max. Ladeleistung, Mindest-/Maximaler Ladestand, Leistung bei Zählerausfall, Ladestrategie, USV-Modus |
+| Diagnose | Verbunden, Letztes Update, Firmware, IP-Adresse, Temperatur, Laufzeit, Fehler-Flags, Schreiben möglich |
+
+Vorzeichen der CCU: positiv = Batterie entlädt bzw. CCU speist ins Haus bzw. Netzbezug, negativ = umgekehrt.
+Die Energiezähler sind **Schätzwerte**, die die CCU etwa alle 5 Minuten speichert, nicht für die Abrechnung.
+Ein Beispiel-Dashboard liegt unter [`examples/dashboard.yaml`](examples/dashboard.yaml).
+
+## Einstellungen ändern: was „bestätigt“ heißt
+Die Integration sendet den Wert und wartet, bis die CCU ihn zurückmeldet. Das heißt: *gespeichert*, nicht
+*Leistung sofort geändert*. Eine feste Zielleistung („entlade 300 W“) gibt es nicht: Die CCU regelt immer auf
+ihren eigenen Zähler. Lehnt die CCU einen Wert ab oder antwortet nicht, bekommst du eine Fehlermeldung und die
+Entity zeigt wieder den echten Wert.
 
 ## Bekannte Einschränkungen
-- **Schreiben nur ab Firmware 2.43.** Mit älterer Firmware (z. B. 2.42.103) lehnt die CCU alle Änderungen ab.
-  Die Integration verweigert das dann mit Fehlermeldung, schreibt eine Warnung ins Log und legt einen Hinweis
-  unter Reparaturen an.
-- Eine feste Zielleistung („entlade 300 W“) gibt es nicht: Die CCU regelt immer auf ihren eigenen Zähler.
-  Wer die Grenze nachführt, ändert `Max. Ausgangsleistung`.
-- „Bestätigt“ heißt: Die CCU meldet den neuen Wert zurück. Ob die Leistung sich dadurch sofort ändert,
-  entscheidet die CCU-Regelung.
-- Energiezähler sind Schätzwerte, die die CCU etwa alle 5 Minuten speichert (nicht für Abrechnung).
-- Vorzeichen der CCU: positiv = Batterie entlädt / CCU speist ins Haus / Netzbezug.
+- **Schreiben nur ab Firmware 2.43.** Bei älterer Firmware verweigert die Integration das mit einer
+  Fehlermeldung, schreibt eine Warnung ins Log und legt einen Hinweis unter *Reparaturen* an.
+- **Ältere Firmware meldet Einstellungen teils nicht zurück** (z. B. 2.43.21 bei einer der getesteten CCUs).
+  Die Werte bleiben dann „unbekannt“, und ein Schreibzugriff kann nicht bestätigt werden. Ein Firmware-Update
+  über die Maxxisun-App hilft.
 - Die ältere Maxxicharge-V2-CCU ohne MQTT wird nicht unterstützt.
-- Alte Entity-IDs (`number.ccu2_maximum_output` usw.) werden nicht migriert. Automationen müssen auf
-  die neuen Entities umgestellt werden (z. B. `number.ccu_06e8_max_ausgangsleistung`).
-- Dieser Stand wurde nicht gegen echte Broker-Daten getestet (siehe Testanleitung).
+- Der **eingebaute Broker** ist bewusst klein: Anmeldung, Publish/Subscribe, Retained, Last Will, MQTT 3.1.1 und 5,
+  **keine Verschlüsselung**, höchstens 20 Clients, läuft nur, solange eine CCU eingerichtet ist.
+  Belegt ein anderer Dienst den Port 1883, wähle einen anderen Port oder nutze diesen Dienst.
+- Die MQTT-Verbindung der CCU ist **unverschlüsselt**. Nur im vertrauenswürdigen Heimnetz betreiben.
+- Alte Entity-IDs der Autodiscovery werden nicht migriert. Automationen und Dashboards müssen auf die
+  neuen Entities (`sensor.ccu_xxxx_…`) umgestellt werden.
 
-## Testanleitung (separate Testinstanz, nicht produktiv)
-1. **Laden:** `custom_components/maxxicharge` in die Testinstanz kopieren (bzw. per HACS), neu starten.
-   Die Testinstanz braucht Zugriff auf den Broker. **Wichtig:** Zwei Instanzen am selben Broker sehen
-   dieselben CCUs. Schreibzugriffe in der Testinstanz wirken also auch in der Produktion.
-   Zum Testen daher nur unkritische Werte ändern (z. B. Max. Ladestand ±1 %).
-2. **Logging** in `configuration.yaml` der Testinstanz:
-   ```yaml
-   logger:
-     default: warning
-     logs:
-       custom_components.maxxicharge: debug
-   ```
-3. **Einrichtung prüfen:** Im Log steht „CCU … eingerichtet mit N Discovery-Entities“. Das Gerät zeigt
-   die Entities in den Bereichen Steuerung / Konfiguration / Diagnose.
-4. **Schreibzugriff prüfen:** Wert ändern, dann im Debug-Log nach `Schreibe … auf …` und
-   `… bestätigt` suchen. Parallel zeigt `mosquitto_sub -t '<command-topic>' -v` das Kommando.
-   Die Topics stehen im Diagnose-Download (Eintrag → ⋮ → Diagnose herunterladen → `entities`).
-5. **Ablehnung prüfen:** Einen unzulässigen oder abgelehnten Wert setzen (z. B. mit CCU-Firmware 2.42.103).
-   Erwartung: Fehlermeldung „… nicht übernommen (aktueller Wert: …)“, Entity springt auf den echten Wert zurück,
-   Warnung im Log.
-6. **Firmware-Hinweis:** Bei Firmware < 2.43 erscheint unter Einstellungen → Reparaturen ein Hinweis,
-   „Schreiben möglich“ steht auf *Aus*.
+## Fehlersuche
+| Problem | Lösung |
+|---|---|
+| Der Assistent findet keine CCU | Im Dialog stehen die mit dem Broker **verbundenen** und die **abgelehnten** CCUs samt Grund. Bei „password“ Benutzer und Passwort in der App neu eintragen (nicht leer lassen). Dann „Erneut suchen“. |
+| Eine CCU steht unter *Reparaturen* als „abgelehnt“ | Zugangsdaten in der App prüfen: Eintrag → Konfigurieren → Verbindungsdaten anzeigen. |
+| Werte „nicht verfügbar“ | Die CCU hat sich seit zwei Minuten nicht gemeldet. WLAN und Broker prüfen. |
+| Schreiben meldet „nicht übernommen“ | Firmware 2.43 oder neuer? Meldet die CCU die Einstellung überhaupt (Wert nicht „unbekannt“)? Siehe Log. |
+
+Für das Log in `configuration.yaml`:
+```yaml
+logger:
+  default: warning
+  logs:
+    custom_components.maxxicharge: debug
+```
+Der **Diagnose-Download** (Eintrag → ⋮ → Diagnose herunterladen) enthält Topics und Werte. IP, CCU-ID und
+Passwörter sind geschwärzt.
+
+## Datenschutz und Sicherheit
+- Alles läuft **lokal**. Es gibt keine Cloud-Verbindung und keine Telemetrie.
+- Das Passwort des eingebauten Brokers steht in der Konfiguration der Integration, nicht in Entities. Im
+  Diagnose-Download wird es geschwärzt.
+- Der eingebaute Broker lauscht auf allen Netzwerkschnittstellen von Home Assistant und verlangt Anmeldung.
+  Setze ihn nicht ins Internet.
+
+## Updates und Deinstallation
+Updates meldet HACS (Einstellungen → Updates). Nach dem Installieren muss Home Assistant neu gestartet werden,
+das ist bei allen Integrationen so. Zum Entfernen den Eintrag löschen und in HACS deinstallieren.
+Änderungen stehen im [Changelog](CHANGELOG.md).
+
+## Fehler melden
+Bitte als [GitHub-Issue](https://github.com/DerSpletti/ha-maxxicharge/issues) mit Home-Assistant-Version, CCU-Firmware,
+Diagnose-Download und dem Log-Ausschnitt (Debug-Log, Passwörter entfernen).
 
 ## Entwicklung
-Katalog der Entities: `custom_components/maxxicharge/const.py`. Übersetzungen werden daraus erzeugt:
-`python3 scripts/generate_translations.py`.
+Der Entity-Katalog steht in `custom_components/maxxicharge/const.py`. Die Übersetzungen entstehen daraus:
+`python3 scripts/generate_translations.py`. Die Tests unter `tests/` brauchen `paho-mqtt` (`test_broker*.py`)
+und laufen ohne Home Assistant.
 
 ## Marken und Haftung
-Maxxisun und Maxxicharge sind Marken der Maxxihandel GmbH. Icon und Logo in `custom_components/maxxicharge/brand/`
-stammen von maxxisun.de und dienen nur dazu, die zugehörige Hardware zu kennzeichnen. Dieses Projekt ist
-inoffiziell und steht in keiner Verbindung zum Hersteller. Auf Wunsch des Herstellers werden die Bilder entfernt.
-
+Dies ist ein **inoffizielles** Projekt und steht in keiner Verbindung zur Maxxihandel GmbH. *Maxxisun* und
+*Maxxicharge* sind Marken des Herstellers. Icon und Logo in `custom_components/maxxicharge/brand/` stammen von
+maxxisun.de und dienen nur dazu, die zugehörige Hardware zu kennzeichnen. Auf Wunsch des Herstellers werden sie
+entfernt. Die Nutzung erfolgt auf eigene Gefahr, das Ändern von Einstellungen am Speicher geschieht auf eigene
+Verantwortung. Lizenz: [MIT](LICENSE) (gilt für den Code, nicht für die Marken).

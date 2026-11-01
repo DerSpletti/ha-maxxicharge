@@ -1,12 +1,20 @@
 {
   "domain": "maxxicharge",
   "name": "Maxxicharge",
-  "codeowners": ["@DerSpletti"],
+  "codeowners": [
+    "@DerSpletti"
+  ],
   "config_flow": true,
-  "dependencies": ["mqtt"],
+  "dependencies": [
+    "mqtt"
+  ],
   "documentation": "https://github.com/DerSpletti/ha-maxxicharge",
+  "integration_type": "hub",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/DerSpletti/ha-maxxicharge/issues",
+  "loggers": [
+    "custom_components.maxxicharge"
+  ],
   "requirements": [],
   "version": "0.4.0"
 }

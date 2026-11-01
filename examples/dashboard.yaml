@@ -1,6 +1,8 @@
-# Beispiel-Dashboard für eine CCU. Entity-IDs an dein Gerät anpassen:
-# Gerät heißt "CCU <letzte 4 Zeichen der ID>", Entity-ID = <domain>.ccu_<xxxx>_<name>.
-# (Prüfen unter Einstellungen → Geräte & Dienste → Maxxicharge → Entities.)
+# Beispiel-Dashboard für eine CCU: Ladestand, Batterie, Netz, Einstellungen und Diagnose.
+# Entity-IDs an dein Gerät anpassen: Das Gerät heißt "CCU <letzte 4 Zeichen der ID>", die Entity-ID ist
+# <domain>.ccu_<xxxx>_<name>. Hier ersetzt du 06e8 durch die Kennung deiner CCU (z. B. 79d8).
+# Nachsehen: Einstellungen → Geräte & Dienste → Maxxicharge → Entities.
+# Für zwei CCUs diese Karte kopieren und die Kennung austauschen.
 type: vertical-stack
 cards:
   - type: gauge

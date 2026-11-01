@@ -60,7 +60,7 @@ async def async_setup_entry(
     ac = "CCU AC Power"
     derived("ac_feed_power", (ac,), lambda c: None if c.num(ac) is None else max(c.num(ac), 0.0),
             unit=lambda c: c.unit(ac) or "W", dc=SensorDeviceClass.POWER, sc=SensorStateClass.MEASUREMENT)
-    derived("ac_draw_power", (ac,), lambda c: None if c.num(ac) is None else max(-c.num(ac), 0.0),
+    derived("ac_draw_power", (ac,), lambda c: None if c.num(ac) is None else max(-c.num(ac), 0.0) + 0.0,
             unit=lambda c: c.unit(ac) or "W", dc=SensorDeviceClass.POWER, sc=SensorStateClass.MEASUREMENT)
     rem = "Usable Energy Remaining"
     derived("usable_energy_kwh", (rem,), lambda c: to_kwh(c.num(rem), c.unit(rem)),
