@@ -3,7 +3,7 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
-## [0.9.0] – 2026-11-01
+## [0.9.1] – 2026-11-01
 Erste veröffentlichte Version (Vorabversion auf dem Weg zu 1.0). Privat gepflegte Integration für die **Maxxisun CCU V2 und V2+** per MQTT.
 
 ### Einrichtung
@@ -55,4 +55,4 @@ Erste veröffentlichte Version (Vorabversion auf dem Weg zu 1.0). Privat gepfleg
 - Hausverbrauch, Autarkie- und Eigenverbrauchsquote sind Näherungen. Energiezähler der CCU sind Schätzwerte.
 - Das Schreiben von Einstellungen und der Betrieb mit einem vorhandenen MQTT-Broker sind auf echter Hardware noch wenig erprobt.
 
-[0.9.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.9.0
+[0.9.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.9.1

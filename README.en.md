@@ -15,7 +15,7 @@ dashboard card in the style of the Maxxisun app.
 
 *Deutsche Version: [README.md](README.md)*
 
-> **Version 0.9.0 (pre-release), privately maintained.** Developed and tested with two CCUs (firmware 2.43.21 and 2.43.53) on the built-in broker.
+> **Version 0.9.1 (pre-release), privately maintained.** Developed and tested with two CCUs (firmware 2.43.21 and 2.43.53) on the built-in broker.
 > Changing settings and running with an existing MQTT broker have seen little real-hardware testing so far. It is
 > not an official release of the manufacturer (see [Trademarks and liability](#trademarks-and-liability)).
 
