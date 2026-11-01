@@ -27,7 +27,7 @@ ABBR = {
     "stat_cla": "state_class", "ent_cat": "entity_category",
     "pl_on": "payload_on", "pl_off": "payload_off", "stat_on": "state_on",
     "stat_off": "state_off", "pl_avail": "payload_available",
-    "pl_not_avail": "payload_not_available", "ops": "options", "dev": "device",
+    "pl_not_avail": "payload_not_available", "ops": "options", "dev": "device", "p": "platform",
 }
 DEV_ABBR = {
     "ids": "identifiers", "mf": "manufacturer", "mdl": "model",
@@ -96,23 +96,11 @@ def _find_ccu_id(cfg: dict[str, Any]) -> str | None:
     return match.group(0).upper() if match else None
 
 
-def parse_config(prefix: str, topic: str, payload: str) -> Spec | None:
-    """Eine Discovery-Nachricht in ein Spec umwandeln (None = nicht relevant)."""
-    if not payload or not topic.startswith(prefix + "/"):
-        return None
-    component = topic[len(prefix) + 1 :].split("/")[0]
-    if component not in SUPPORTED:
-        return None
-    try:
-        cfg = json.loads(payload)
-    except ValueError:
-        return None
-    if not isinstance(cfg, dict):
-        return None
-    cfg = _expand(cfg)
+def _spec_from(component: str, cfg: dict[str, Any]) -> Spec | None:
+    """Spec aus einer bereits expandierten Einzel-Config (inkl. 'device')."""
     ccu_id = _find_ccu_id(cfg)
     name = cfg.get("name")
-    if not ccu_id or not isinstance(name, str):
+    if component not in SUPPORTED or not ccu_id or not isinstance(name, str):
         return None
 
     avail_topic = cfg.get("availability_topic")
@@ -155,6 +143,49 @@ def parse_config(prefix: str, topic: str, payload: str) -> Spec | None:
     )
 
 
+def parse_message(prefix: str, topic: str, payload: str) -> list[Spec]:
+    """Eine Discovery-Nachricht lesen: Einzel-Entity oder Geräte-Discovery (mit 'cmps')."""
+    if not payload or not topic.startswith(prefix + "/"):
+        return []
+    component = topic[len(prefix) + 1 :].split("/")[0]
+    try:
+        raw = json.loads(payload)
+    except ValueError:
+        return []
+    if not isinstance(raw, dict):
+        return []
+    if component != "device" and "cmps" not in raw and "components" not in raw:
+        spec = _spec_from(component, _expand(raw))
+        return [spec] if spec else []
+
+    # Geräte-Discovery: gemeinsame Felder oben, Entities unter "cmps"/"components"
+    cmps = raw.get("cmps") or raw.get("components")
+    if not isinstance(cmps, dict):
+        return []
+    dev_raw = raw.get("dev") or raw.get("device")
+    shared = {k: v for k, v in raw.items() if k not in ("cmps", "components", "dev", "device", "o", "origin")}
+    out: list[Spec] = []
+    for key, comp in cmps.items():
+        if not isinstance(comp, dict):
+            continue
+        comp_raw = {("platform" if k == "p" else k): v for k, v in comp.items()}
+        merged = {**shared, **comp_raw, "device": dev_raw}
+        merged.setdefault("name", key)
+        if "unique_id" not in merged and "uniq_id" not in merged:
+            merged["unique_id"] = f"{key}"
+        cfg = _expand(merged)
+        spec = _spec_from(str(cfg.get("platform") or ""), cfg)
+        if spec:
+            out.append(spec)
+    return out
+
+
+def parse_config(prefix: str, topic: str, payload: str) -> Spec | None:
+    """Einzel-Entity (Kompatibilität)."""
+    specs = parse_message(prefix, topic, payload)
+    return specs[0] if specs else None
+
+
 def specs_to_json(specs: dict[str, Spec]) -> dict[str, Any]:
     return {name: asdict(spec) for name, spec in specs.items()}
 
@@ -176,18 +207,25 @@ async def async_collect(
     found: dict[str, dict[str, Spec]] = {}
     last = time.monotonic()
 
+    seen: list[str] = []
+
     @callback
     def _on_msg(msg: Any) -> None:
         nonlocal last
         try:
-            spec = parse_config(prefix, msg.topic, msg.payload)
+            specs = parse_message(prefix, msg.topic, msg.payload)
         except Exception:  # noqa: BLE001 - nie den Event-Loop stören
             _LOGGER.debug("Discovery-Nachricht %s nicht lesbar", msg.topic, exc_info=True)
             return
-        if spec is None or (ccu_id and spec.ccu_id != ccu_id):
+        if not specs:
+            if len(seen) < 5 and msg.topic not in seen:
+                seen.append(msg.topic)
             return
-        found.setdefault(spec.ccu_id, {})[spec.name] = spec
-        last = time.monotonic()
+        for spec in specs:
+            if ccu_id and spec.ccu_id != ccu_id:
+                continue
+            found.setdefault(spec.ccu_id, {})[spec.name] = spec
+            last = time.monotonic()
 
     unsubs = [
         await bus.subscribe(f"{prefix}/+/+/config", _on_msg),
@@ -202,4 +240,8 @@ async def async_collect(
     finally:
         for unsub in unsubs:
             unsub()
+    if not found and seen:
+        _LOGGER.warning(
+            "Discovery-Nachrichten empfangen, aber keine CCU erkannt (Topics, Beispiele): %s", ", ".join(seen)
+        )
     return found

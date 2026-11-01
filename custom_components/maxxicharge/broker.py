@@ -174,6 +174,9 @@ class MiniBroker:
         self._clients.clear()
         _LOGGER.info("Eingebauter MQTT-Broker gestoppt")
 
+    def connected_clients(self) -> list[str]:
+        return sorted(self._clients)
+
     def recent_rejections(self, window: float = 120.0) -> list[str]:
         """Clients, die sich zuletzt mit falschem Benutzer/Passwort angemeldet haben."""
         now = time.monotonic()
@@ -299,7 +302,17 @@ class MiniBroker:
             user_ok = user is not None and hmac.compare_digest(user, self.username.encode())
             pw_ok = pw is not None and hmac.compare_digest(pw, self.password.encode())
             if not (user_ok and pw_ok):
-                why = "user" if not user_ok else "password"
+                why = "user"
+                if user_ok:
+                    exp = self.password.encode()
+                    if pw is None:
+                        why = "password: missing"
+                    elif pw.strip() == exp:
+                        why = "password: spaces at start/end"
+                    elif pw.lower() == exp.lower():
+                        why = "password: upper/lower case differs"
+                    else:
+                        why = "password"
                 self._rejected[cid] = (time.monotonic(), why)
                 _LOGGER.warning(
                     "MQTT-Anmeldung abgelehnt von Client %s: %s stimmt nicht mit dem eingebauten Broker "
@@ -321,7 +334,7 @@ class MiniBroker:
         client.client_id, client.will, client.connected = cid, will, True
         self._clients[cid] = client
         client.send(b"\x20\x03\x00\x00\x00" if level == 5 else b"\x20\x02\x00\x00")
-        _LOGGER.debug("MQTT-Client %s verbunden (Protokoll %s)", cid, level)
+        _LOGGER.info("MQTT-Client %s verbunden (Protokoll %s)", cid, level)
         return True
 
     def _on_publish(self, client: _Client, first: int, body: bytes) -> None:
