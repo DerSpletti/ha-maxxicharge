@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Set up Maxxicharge",
-        "description": "**How to connect the CCU to MQTT (one time):**\n\n1. Open `http://CCU-IP/integrations/mqtt` in your browser (the page has no login, use it only in your home network).\n2. Switch “MQTT connection” on. Broker address: `{broker}`, port: `{port}`.\n3. Switch “Login” on and enter user and password of a Home Assistant user (ideally a dedicated MQTT-only user).\n4. Save.\n\nRequires firmware **2.42.103 or newer** (reading) and **2.43 or newer** to change settings. If the CCU is already connected just click “Submit”. The search takes up to 10 seconds.",
+        "description": "**How to connect the CCU to MQTT (one time):**\n\n1. In the Maxxisun app open **Smart Home Integration** (or `http://CCU-IP/integrations/mqtt` in a browser; the page has no login, use it only in your home network).\n2. Switch “MQTT connection” on. Broker address: `{broker}`, port: `{port}`.\n3. Switch “Login” on and enter user and password of a Home Assistant user (ideally a dedicated MQTT-only user).\n4. Save.\n\nRequires firmware **2.42.103 or newer** (reading) and **2.43 or newer** to change settings. If the CCU is already connected just click “Submit”. The search takes up to 10 seconds.",
         "data": {
           "discovery_prefix": "Discovery prefix"
         },
@@ -11,13 +11,34 @@
           "discovery_prefix": "Default is “homeassistant”. Change only if your CCU uses another prefix."
         }
       },
+      "broker_choice": {
+        "title": "How should the CCU be connected?",
+        "description": "MQTT is not set up in Home Assistant yet. You can either use the **built-in broker** (nothing to install) or set up your own MQTT.",
+        "menu_options": {
+          "embedded": "Use the built-in broker (recommended, nothing to install)",
+          "mqtt_missing": "Set up my own MQTT (instructions)"
+        }
+      },
+      "embedded": {
+        "title": "Built-in MQTT broker",
+        "description": "Home Assistant starts a small MQTT broker that the CCU connects to. Note user and password, you will enter them at the CCU in a moment. If port 1883 is free it is the best choice.",
+        "data": {
+          "broker_port": "Port",
+          "broker_user": "User",
+          "broker_password": "Password (8–64 characters: letters, digits, _ . -)"
+        }
+      },
+      "search": {
+        "title": "Connect the CCU to Home Assistant",
+        "description": "**At the CCU (one time):**\n\n1. In the Maxxisun app open **Smart Home Integration** (or `http://CCU-IP/integrations/mqtt` in a browser; the page has no login, use it only in your home network).\n2. Switch “MQTT connection” on. Broker address: `{broker}`, port: `{port}`.\n3. Switch “Login” on. User: `{user}`, password: `{password}`.\n4. Save.\n\nRequires firmware 2.42.103 or newer (reading) and 2.43 or newer to change settings. Then click “Submit”. The search takes up to 10 seconds."
+      },
       "mqtt_missing": {
         "title": "Set up MQTT in Home Assistant",
         "description": "The CCU speaks MQTT, so Home Assistant needs a broker.\n\n**No broker yet?** Install the **Mosquitto broker** add-on (Settings → Add-ons → Add-on store), start it and then open [the MQTT setup](/config/integrations/dashboard/add?domain=mqtt). Usually “Submit” is enough there.\n\n**Already have a broker?** Set up address, port and credentials in [the MQTT setup](/config/integrations/dashboard/add?domain=mqtt).\n\nThen click “Submit” and I will check the connection again."
       },
       "no_ccu": {
         "title": "No CCU found",
-        "description": "No new CCU announced itself on the broker. Check:\n\n- Is MQTT switched on at the CCU (`http://CCU-IP/integrations/mqtt`)? Broker `{broker}`, port `{port}`.\n- Are user and password correct?\n- Is the firmware at least 2.42.103?\n- Are the CCU and Home Assistant on the same network?\n\nAfter saving on the CCU it takes a few seconds until it shows up.",
+        "description": "No new CCU announced itself on the broker. Check:\n\n- Is the MQTT connection switched on and saved in the Maxxisun app under “Smart Home Integration” (“Connected” at the top)? Broker `{broker}`, port `{port}`.\n- Are user and password correct?\n- Is the firmware at least 2.42.103?\n- Are the CCU and Home Assistant on the same network?\n\nAfter saving on the CCU it takes a few seconds until it shows up.",
         "menu_options": {
           "retry": "Search again",
           "manual": "Enter CCU ID manually"
@@ -46,11 +67,15 @@
       "invalid_ccu_id": "Invalid CCU ID. Expected: CCU2-XXXX-XXXX-XXXX.",
       "cannot_connect": "No CCU answers at this IP (/api/live unreachable).",
       "not_found": "No discovery config for this CCU found on the broker.",
-      "none_selected": "Please select at least one CCU."
+      "none_selected": "Please select at least one CCU.",
+      "invalid_user": "Invalid user name (1–32 characters: letters, digits, _ . -).",
+      "invalid_password": "Invalid password (8–64 characters: letters, digits, _ . -).",
+      "port_in_use": "The port is already in use (is an MQTT broker already running here?). Choose another port or use the existing MQTT."
     },
     "abort": {
       "mqtt_not_ready": "The MQTT integration is not set up or not connected.",
-      "already_configured": "All CCUs found are already set up."
+      "already_configured": "All CCUs found are already set up.",
+      "port_in_use": "The port is already in use (is an MQTT broker already running here?). Choose another port or use the existing MQTT."
     }
   },
   "options": {
@@ -347,6 +372,9 @@
     },
     "ccu_not_found": {
       "message": "CCU {ccu} has no discovery config on the broker (offline?)."
+    },
+    "port_in_use": {
+      "message": "The built-in MQTT broker could not start on port {port} (port in use?)."
     },
     "no_command_topic": {
       "message": "“{name}” is not writable (no command topic)."

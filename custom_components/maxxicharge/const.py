@@ -14,6 +14,16 @@ CONF_CLEANUP = "cleanup"
 
 DEFAULT_PREFIX = "homeassistant"
 
+CONF_MODE = "mode"
+CONF_BROKER_PORT = "broker_port"
+CONF_BROKER_USER = "broker_user"
+CONF_BROKER_PASSWORD = "broker_password"
+MODE_HA = "ha_mqtt"  # MQTT-Integration von Home Assistant
+MODE_EMBEDDED = "embedded"  # eingebauter Broker
+DEFAULT_BROKER_PORT = 1883
+DEFAULT_BROKER_USER = "maxxicharge"
+EMBEDDED_WAIT = 60.0  # so lange wartet der eingebaute Broker beim Start auf die Discovery der CCU
+
 MIN_WRITE_FIRMWARE = (2, 43, 0)  # ab hier nimmt die CCU Einstellungen per MQTT an
 WRITE_TIMEOUT = 10.0  # Sekunden, bis die CCU einen Schreibzugriff bestätigt haben muss
 DISCOVERY_TIMEOUT = 10.0  # max. Wartezeit auf Discovery-Configs

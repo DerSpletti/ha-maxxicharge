@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import CONF_CCU_ID, CONF_IP
 
-TO_REDACT = {CONF_CCU_ID, CONF_IP, "unique_id", "CCU IP", "CCU ID", "serial_number"}
+TO_REDACT = {CONF_CCU_ID, CONF_IP, "broker_password", "broker_user", "unique_id", "CCU IP", "CCU ID", "serial_number"}
 
 
 async def async_get_config_entry_diagnostics(

@@ -9,7 +9,6 @@ import logging
 import re
 from typing import Any
 
-from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
@@ -60,8 +59,9 @@ def to_kwh(value: float | None, unit: str | None) -> float | None:
 class MaxxiCoordinator:
     """Eine CCU: MQTT-Push, Verfügbarkeit, Firmware und verifiziertes Schreiben."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, specs: dict[str, Spec]) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, specs: dict[str, Spec], bus: Any) -> None:
         self.hass = hass
+        self.bus = bus
         self.entry = entry
         self.ccu_id: str = entry.data[CONF_CCU_ID]
         self.specs = specs
@@ -93,13 +93,11 @@ class MaxxiCoordinator:
     async def async_start(self) -> None:
         for topic in self._by_topic:
             self._unsubs.append(
-                await mqtt.async_subscribe(self.hass, topic, self._handle_state, 0, "utf-8")
+                await self.bus.subscribe(topic, self._handle_state)
             )
         if self._avail_topic:
             self._unsubs.append(
-                await mqtt.async_subscribe(
-                    self.hass, self._avail_topic, self._handle_availability, 0, "utf-8"
-                )
+                await self.bus.subscribe(self._avail_topic, self._handle_availability)
             )
         self._unsubs.append(
             async_track_time_interval(self.hass, self._tick, timedelta(seconds=TICK_SECONDS))
@@ -304,7 +302,7 @@ class MaxxiCoordinator:
         try:
             _LOGGER.debug("Schreibe %s=%s auf %s", name, payload, spec.command_topic)
             try:
-                await mqtt.async_publish(self.hass, spec.command_topic, payload, 0, False)
+                await self.bus.publish(spec.command_topic, payload, False)
             except HomeAssistantError as exc:
                 raise HomeAssistantError(translation_domain=DOMAIN, translation_key="publish_failed", translation_placeholders=err) from exc
             try:

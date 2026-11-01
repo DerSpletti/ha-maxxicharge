@@ -1,10 +1,12 @@
-"""Einrichtungsassistent: CCUs am Broker finden, auswählen, alte Entities aufräumen."""
+"""Einrichtungsassistent: MQTT klären, CCUs finden, auswählen, alte Entities aufräumen."""
 
 from __future__ import annotations
 
 import ipaddress
 import logging
 import re
+import secrets
+import string
 from typing import Any
 
 import aiohttp
@@ -23,22 +25,33 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
+from .bus import BrokerConflict, EmbeddedBus, HaBus, get_manager
 from .const import (
     CLEANUP_DISABLE,
     CLEANUP_ENABLE,
     CLEANUP_NONE,
+    CONF_BROKER_PASSWORD,
+    CONF_BROKER_PORT,
+    CONF_BROKER_USER,
     CONF_CCU_ID,
     CONF_CCUS,
     CONF_CLEANUP,
     CONF_IP,
+    CONF_MODE,
     CONF_PREFIX,
+    DEFAULT_BROKER_PORT,
+    DEFAULT_BROKER_USER,
     DEFAULT_PREFIX,
     DOMAIN,
+    MODE_EMBEDDED,
+    MODE_HA,
 )
 from .discovery import Spec, async_collect
 
 _LOGGER = logging.getLogger(__name__)
 CCU_RE = re.compile(r"^CCU2-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$")
+USER_RE = re.compile(r"^[A-Za-z0-9_.-]{1,32}$")
+PW_RE = re.compile(r"^[A-Za-z0-9_.-]{8,64}$")
 
 
 async def _check_ip(hass: HomeAssistant, ip: str) -> bool:
@@ -59,8 +72,8 @@ async def _check_ip(hass: HomeAssistant, ip: str) -> bool:
 def cleanup_autodiscovery(hass: HomeAssistant, ccu_id: str, mode: str) -> int:
     """Alte MQTT-Autodiscovery-Entities der CCU deaktivieren bzw. wieder aktivieren.
 
-    Es wird nichts gelöscht. Wieder aktiviert werden nur Entities, die der Nutzer-
-    Deaktivierung unterliegen (also auch von uns deaktivierte).
+    Es wird nichts gelöscht. Wieder aktiviert werden nur Entities, die per Nutzer-
+    Deaktivierung abgeschaltet sind (also auch die von uns deaktivierten).
     """
     if mode not in (CLEANUP_DISABLE, CLEANUP_ENABLE):
         return 0
@@ -83,14 +96,23 @@ def cleanup_autodiscovery(hass: HomeAssistant, ccu_id: str, mode: str) -> int:
 
 
 async def _mqtt_ready(hass: HomeAssistant) -> bool:
-    """MQTT ist eingerichtet und verbunden."""
+    """MQTT ist in Home Assistant eingerichtet und verbunden."""
     if not hass.config_entries.async_entries("mqtt"):
         return False
     return bool(await mqtt.async_wait_for_mqtt_client(hass))
 
 
-async def _broker_info(hass: HomeAssistant) -> dict[str, str]:
-    """Broker-Daten, die der Nutzer an der CCU eintragen muss (Host so, dass die CCU ihn erreicht)."""
+async def _host_ip(hass: HomeAssistant) -> str:
+    try:
+        from homeassistant.components.network import async_get_source_ip
+
+        return await async_get_source_ip(hass)
+    except Exception:  # noqa: BLE001
+        return "<IP von Home Assistant>"
+
+
+async def _ha_broker_info(hass: HomeAssistant) -> dict[str, str]:
+    """Broker-Daten der HA-MQTT-Integration, so dass die CCU sie erreicht."""
     host: str | None = None
     port = 1883
     entries = hass.config_entries.async_entries("mqtt")
@@ -99,13 +121,8 @@ async def _broker_info(hass: HomeAssistant) -> dict[str, str]:
         port = entries[0].data.get("port", 1883)
     # Add-on-Namen und Loopback kann die CCU nicht auflösen: dann die IP von Home Assistant
     if not host or "." not in host or host.startswith("127."):
-        try:
-            from homeassistant.components.network import async_get_source_ip
-
-            host = await async_get_source_ip(hass)
-        except Exception:  # noqa: BLE001
-            host = "<IP von Home Assistant>"
-    return {"broker": str(host), "port": str(port)}
+        host = await _host_ip(hass)
+    return {"broker": str(host), "port": str(port), "user": "", "password": ""}
 
 
 def _label(ccu_id: str, specs: dict[str, Spec]) -> str:
@@ -113,50 +130,151 @@ def _label(ccu_id: str, specs: dict[str, Spec]) -> str:
     return f"{ccu_id} ({model}, {len(specs)} Entities)"
 
 
+def _random_password() -> str:
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(14))
+
+
 class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Assistent: Suche → Auswahl → fertig."""
+    """Assistent: MQTT klären → CCU verbinden → CCUs suchen → auswählen."""
 
     VERSION = 1
 
     def __init__(self) -> None:
         self._prefix = DEFAULT_PREFIX
+        self._mode = MODE_HA
+        self._emb: dict[str, Any] = {}
+        self._pw = _random_password()
         self._found: dict[str, dict[str, Spec]] = {}
-        self._ph: dict[str, str] = {"broker": "?", "port": "1883"}
+        self._ph: dict[str, str] = {"broker": "?", "port": "1883", "user": "", "password": ""}
 
+    # ---------- Hilfen ----------
+    def _existing_embedded(self) -> dict[str, Any] | None:
+        for e in self._async_current_entries():
+            if e.data.get(CONF_MODE) == MODE_EMBEDDED:
+                return {k: e.data[k] for k in (CONF_BROKER_PORT, CONF_BROKER_USER, CONF_BROKER_PASSWORD)}
+        return None
+
+    def _conn_data(self) -> dict[str, Any]:
+        data: dict[str, Any] = {CONF_MODE: self._mode, CONF_PREFIX: self._prefix, CONF_IP: ""}
+        if self._mode == MODE_EMBEDDED:
+            data.update(self._emb)
+        return data
+
+    async def _ensure_bus(self) -> Any:
+        """Nachrichtenweg für die Suche; beim eingebauten Broker wird er dafür gestartet."""
+        if self._mode == MODE_EMBEDDED:
+            broker = await get_manager(self.hass).acquire(
+                self.flow_id,
+                self._emb[CONF_BROKER_PORT],
+                self._emb[CONF_BROKER_USER],
+                self._emb[CONF_BROKER_PASSWORD],
+            )
+            return EmbeddedBus(broker)
+        return HaBus(self.hass)
+
+    @callback
+    def async_remove(self) -> None:
+        """Assistent beendet: Broker nur freigeben (Einträge halten ihn weiter)."""
+        if self._mode == MODE_EMBEDDED:
+            get_manager(self.hass).release(self.flow_id)
+
+    async def _scan(self) -> ConfigFlowResult:
+        """CCUs suchen und zum passenden Schritt weiterleiten."""
+        try:
+            bus = await self._ensure_bus()
+        except (OSError, BrokerConflict):
+            return self.async_abort(reason="port_in_use")
+        found = await async_collect(bus, self._prefix)
+        configured = {e.data.get(CONF_CCU_ID) for e in self._async_current_entries()}
+        self._found = {k: v for k, v in found.items() if k not in configured}
+        if self._found:
+            return await self.async_step_select()
+        if found:
+            return self.async_abort(reason="already_configured")
+        return self.async_show_menu(
+            step_id="no_ccu", menu_options=["retry", "manual"], description_placeholders=self._ph
+        )
+
+    # ---------- Einstieg ----------
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        if not await _mqtt_ready(self.hass):
-            return await self.async_step_mqtt_missing()
-        self._ph = await _broker_info(self.hass)
-        if user_input is not None:
-            self._prefix = user_input[CONF_PREFIX].strip().strip("/") or DEFAULT_PREFIX
-            found = await async_collect(self.hass, self._prefix)
-            configured = {e.data.get(CONF_CCU_ID) for e in self._async_current_entries()}
-            self._found = {k: v for k, v in found.items() if k not in configured}
-            if self._found:
-                return await self.async_step_select()
-            if found:
-                return self.async_abort(reason="already_configured")
-            return self.async_show_menu(
-                step_id="no_ccu",
-                menu_options=["retry", "manual"],
+        if await _mqtt_ready(self.hass):
+            self._mode = MODE_HA
+            self._ph = await _ha_broker_info(self.hass)
+            if user_input is not None:
+                self._prefix = user_input[CONF_PREFIX].strip().strip("/") or DEFAULT_PREFIX
+                return await self._scan()
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema({vol.Required(CONF_PREFIX, default=DEFAULT_PREFIX): str}),
                 description_placeholders=self._ph,
             )
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema({vol.Required(CONF_PREFIX, default=DEFAULT_PREFIX): str}),
-            description_placeholders=self._ph,
+        existing = self._existing_embedded()
+        if existing:  # eingebauter Broker läuft schon für andere CCUs
+            self._mode, self._emb = MODE_EMBEDDED, existing
+            return await self.async_step_search()
+        return self.async_show_menu(
+            step_id="broker_choice", menu_options=["embedded", "mqtt_missing"]
         )
 
     async def async_step_mqtt_missing(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """MQTT fehlt in Home Assistant: erklären, dann erneut prüfen."""
+        """Nutzer will ein eigenes MQTT: erklären, dann erneut prüfen."""
         if user_input is not None:
             return await self.async_step_user()
         return self.async_show_form(step_id="mqtt_missing", data_schema=vol.Schema({}))
 
+    # ---------- Eingebauter Broker ----------
+    async def async_step_embedded(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            port = int(user_input[CONF_BROKER_PORT])
+            user, pw = user_input[CONF_BROKER_USER], user_input[CONF_BROKER_PASSWORD]
+            if not USER_RE.match(user):
+                errors[CONF_BROKER_USER] = "invalid_user"
+            elif not PW_RE.match(pw):
+                errors[CONF_BROKER_PASSWORD] = "invalid_password"
+            else:
+                self._mode = MODE_EMBEDDED
+                self._emb = {CONF_BROKER_PORT: port, CONF_BROKER_USER: user, CONF_BROKER_PASSWORD: pw}
+                try:
+                    await get_manager(self.hass).acquire(self.flow_id, port, user, pw)
+                except (OSError, BrokerConflict):
+                    errors[CONF_BROKER_PORT] = "port_in_use"
+                else:
+                    return await self.async_step_search()
+        return self.async_show_form(
+            step_id="embedded",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_BROKER_PORT, default=DEFAULT_BROKER_PORT): vol.All(
+                        vol.Coerce(int), vol.Range(min=1024, max=65535)
+                    ),
+                    vol.Required(CONF_BROKER_USER, default=DEFAULT_BROKER_USER): str,
+                    vol.Required(CONF_BROKER_PASSWORD, default=self._pw): str,
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_search(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Anleitung für die CCU (eingebauter Broker) und Suche."""
+        self._ph = {
+            "broker": await _host_ip(self.hass),
+            "port": str(self._emb[CONF_BROKER_PORT]),
+            "user": self._emb[CONF_BROKER_USER],
+            "password": self._emb[CONF_BROKER_PASSWORD],
+        }
+        if user_input is not None:
+            return await self._scan()
+        return self.async_show_form(
+            step_id="search", data_schema=vol.Schema({}), description_placeholders=self._ph
+        )
+
     async def async_step_retry(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Erneut nach CCUs suchen."""
-        return await self.async_step_user({CONF_PREFIX: self._prefix})
+        return await self._scan()
 
+    # ---------- Auswahl ----------
     async def async_step_select(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         options = {k: _label(k, v) for k, v in self._found.items()}
         if user_input is not None:
@@ -172,12 +290,10 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
                     self.hass.config_entries.flow.async_init(
                         DOMAIN,
                         context={"source": "ccu"},
-                        data={CONF_CCU_ID: other, CONF_PREFIX: self._prefix, CONF_IP: ""},
+                        data={**self._conn_data(), CONF_CCU_ID: other},
                     )
                 )
-            return await self.async_step_ccu(
-                {CONF_CCU_ID: ids[0], CONF_PREFIX: self._prefix, CONF_IP: ""}
-            )
+            return await self.async_step_ccu({**self._conn_data(), CONF_CCU_ID: ids[0]})
         return self.async_show_form(step_id="select", data_schema=self._select_schema(options))
 
     @staticmethod
@@ -193,12 +309,15 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_CCU_ID] = "invalid_ccu_id"
             elif ip and not await _check_ip(self.hass, ip):
                 errors[CONF_IP] = "cannot_connect"
-            elif ccu_id not in await async_collect(self.hass, self._prefix, ccu_id):
-                errors["base"] = "not_found"
             else:
-                return await self.async_step_ccu(
-                    {CONF_CCU_ID: ccu_id, CONF_PREFIX: self._prefix, CONF_IP: ip}
-                )
+                try:
+                    bus = await self._ensure_bus()
+                except (OSError, BrokerConflict):
+                    return self.async_abort(reason="port_in_use")
+                if ccu_id not in await async_collect(bus, self._prefix, ccu_id):
+                    errors["base"] = "not_found"
+                else:
+                    return await self.async_step_ccu({**self._conn_data(), CONF_CCU_ID: ccu_id, CONF_IP: ip})
         return self.async_show_form(
             step_id="manual",
             data_schema=vol.Schema(

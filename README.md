@@ -28,11 +28,19 @@ installieren → Home Assistant neu starten.
 **Manuell:** Ordner `custom_components/maxxicharge` nach `<config>/custom_components/` kopieren, neu starten.
 
 ## Einrichtung von null (ohne vorhandenes MQTT)
+Es muss **nichts zusätzlich installiert werden**: Ist in Home Assistant kein MQTT eingerichtet, bietet der
+Assistent den **eingebauten Broker** an. Er startet im Hintergrund der Integration (reines Python, keine
+Zusatzpakete), du legst nur Port, Benutzer und Passwort fest und trägst sie in der Maxxisun-App ein.
+Ist MQTT (z. B. Mosquitto) schon da, nutzt die Integration dieses MQTT und startet keinen eigenen Broker.
+Der eingebaute Broker ist bewusst klein: Login, Publish/Subscribe, Retained, Last Will, MQTT 3.1.1 und 5,
+keine Verschlüsselung, höchstens 20 Clients. Läuft auf Port 1883 schon ein anderer Broker, wähle einen
+anderen Port oder nutze diesen Broker.
+
 Der Assistent führt dich durch alles. Du brauchst nur Home Assistant und die CCU im selben Netz.
 1. **MQTT in Home Assistant:** Fehlt die MQTT-Integration, erklärt der Assistent, wie du das Add-on
    *Mosquitto broker* installierst und die MQTT-Integration einrichtest, und prüft danach erneut.
-2. **CCU mit dem Broker verbinden:** Der Assistent zeigt Broker-Adresse und Port. An der CCU öffnest du
-   `http://<IP-DER-CCU>/integrations/mqtt`, schaltest „MQTT-Verbindung“ und „Anmeldung“ ein und trägst
+2. **CCU mit dem Broker verbinden:** Der Assistent zeigt Broker-Adresse und Port. In der Maxxisun-App öffnest du
+   **Smart Home Integration** (oder im Browser `http://<IP-DER-CCU>/integrations/mqtt`), schaltest „MQTT-Verbindung“ und „Anmeldung“ ein und trägst
    Broker, Port 1883 sowie Benutzer und Passwort eines Home-Assistant-Benutzers ein (am besten ein eigener
    Benutzer nur für MQTT). Speichern.
 3. **CCU finden:** Der Assistent lauscht am Broker und zeigt die gefundenen CCUs. Findet er keine, bekommt
@@ -40,7 +48,7 @@ Der Assistent führt dich durch alles. Du brauchst nur Home Assistant und die CC
 
 Hinweise: Benötigt Firmware ≥ 2.42.103 (Lesen), ≥ 2.43 zum Ändern. Die MQTT-Seite der CCU hat keinen
 Login und MQTT läuft unverschlüsselt: nur im Heimnetz betreiben. (Der CCU-Ablauf stammt aus einem
-Praxisbericht, es gibt keine offizielle Maxxisun-Doku dazu.)
+Praxisbericht, es gibt keine offizielle Maxxisun-Doku dazu; die Feldnamen stimmen mit der Maxxisun-App überein.)
 
 ## Einrichtung
 1. Einstellungen → Geräte & Dienste → Integration hinzufügen → **Maxxicharge**.

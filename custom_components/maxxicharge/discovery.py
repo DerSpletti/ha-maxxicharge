@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 import json
 import logging
 import re
 import time
 from typing import Any
 
-from homeassistant.components import mqtt
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
 
 from .const import DISCOVERY_QUIET, DISCOVERY_TIMEOUT
 
@@ -156,8 +155,22 @@ def parse_config(prefix: str, topic: str, payload: str) -> Spec | None:
     )
 
 
+def specs_to_json(specs: dict[str, Spec]) -> dict[str, Any]:
+    return {name: asdict(spec) for name, spec in specs.items()}
+
+
+def specs_from_json(data: dict[str, Any]) -> dict[str, Spec]:
+    out: dict[str, Spec] = {}
+    for name, d in data.items():
+        try:
+            out[name] = Spec(**d)
+        except TypeError:  # Cache aus anderer Version
+            return {}
+    return out
+
+
 async def async_collect(
-    hass: HomeAssistant, prefix: str, ccu_id: str | None = None
+    bus: Any, prefix: str, ccu_id: str | None = None, timeout: float = DISCOVERY_TIMEOUT
 ) -> dict[str, dict[str, Spec]]:
     """Discovery-Configs einsammeln: {ccu_id: {entity_name: Spec}}."""
     found: dict[str, dict[str, Spec]] = {}
@@ -177,12 +190,12 @@ async def async_collect(
         last = time.monotonic()
 
     unsubs = [
-        await mqtt.async_subscribe(hass, f"{prefix}/+/+/config", _on_msg, 0, "utf-8"),
-        await mqtt.async_subscribe(hass, f"{prefix}/+/+/+/config", _on_msg, 0, "utf-8"),
+        await bus.subscribe(f"{prefix}/+/+/config", _on_msg),
+        await bus.subscribe(f"{prefix}/+/+/+/config", _on_msg),
     ]
     try:
         start = time.monotonic()
-        while time.monotonic() - start < DISCOVERY_TIMEOUT:
+        while time.monotonic() - start < timeout:
             await asyncio.sleep(0.25)
             if found and time.monotonic() - last >= DISCOVERY_QUIET:
                 break
