@@ -15,7 +15,7 @@ bringt eine eigene Dashboard-Karte im Stil der Maxxisun-App mit.
 
 *English version: [README.en.md](README.en.md)*
 
-> **Version 1.0.0, inoffiziell.** Entwickelt und getestet mit zwei CCUs (Firmware 2.43.21 und 2.43.53) am eingebauten Broker.
+> **Version 0.9.0 (Vorabversion), inoffiziell.** Entwickelt und getestet mit zwei CCUs (Firmware 2.43.21 und 2.43.53) am eingebauten Broker.
 > Das Ändern von Einstellungen und der Betrieb mit einem vorhandenen MQTT-Broker sind auf echter Hardware noch wenig
 > erprobt. Dieses Projekt steht in keiner Verbindung zum Hersteller (siehe [Marken und Haftung](#marken-und-haftung)).
 
