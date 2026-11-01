@@ -214,47 +214,86 @@
     }
 
     _houseSvg() {
+      // Schräge 3D-Ansicht (Kabinettprojektion): Frontwand, Seitenwand rechts, Satteldach mit Solarmodulen
+      const A = [128, 112], B = [300, 112], R1 = [148, 57], R2 = [320, 57];
+      const P = (u, v) => [A[0] + u * (B[0] - A[0]) + v * (R1[0] - A[0]), A[1] + u * (B[1] - A[1]) + v * (R1[1] - A[1])];
+      const pt = (q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`;
+      let panels = "";
+      const cols = 8, rows = 3, gu = 0.012, gv = 0.03, mu = 0.045, mv = 0.09;
+      const cw = (1 - 2 * mu - (cols - 1) * gu) / cols, ch = (1 - 2 * mv - (rows - 1) * gv) / rows;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const u0 = mu + c * (cw + gu), v0 = mv + r * (ch + gv);
+          const q = [P(u0, v0), P(u0 + cw, v0), P(u0 + cw, v0 + ch), P(u0, v0 + ch)];
+          const shade = q.map((m) => [m[0] + 1.3, m[1] + 1.8]);  // Dicke: Schatten leicht versetzt dahinter
+          panels += `<polygon points="${shade.map(pt).join(" ")}" fill="#070d13" opacity=".7"/>`;
+          panels += `<polygon points="${q.map(pt).join(" ")}" fill="url(#gPanel)" stroke="#aebdc7" stroke-width=".9" stroke-linejoin="round"/>`;
+          for (let k = 1; k < 4; k++) {  // Zellenlinien
+            const a = P(u0 + (cw * k) / 4, v0), b = P(u0 + (cw * k) / 4, v0 + ch);
+            panels += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="#4a6076" stroke-width=".45"/>`;
+          }
+          const m1 = P(u0, v0 + ch / 2), m2 = P(u0 + cw, v0 + ch / 2);
+          panels += `<line x1="${m1[0].toFixed(1)}" y1="${m1[1].toFixed(1)}" x2="${m2[0].toFixed(1)}" y2="${m2[1].toFixed(1)}" stroke="#4a6076" stroke-width=".45"/>`;
+        }
+      }
+      const sheen = [P(mu, mv), P(0.55, mv), P(0.28, 1 - mv), P(mu, 1 - mv)];
+      const battery = (x) => `
+        <polygon points="${x},158 ${x + 6},155 ${x + 22},155 ${x + 16},158" fill="#4a535a"/>
+        <polygon points="${x + 16},158 ${x + 22},155 ${x + 22},201 ${x + 16},204" fill="#1d2225"/>
+        <rect x="${x}" y="158" width="16" height="46" fill="#30373c" stroke="#505a62" stroke-width=".8"/>
+        <rect x="${x + 3}" y="170" width="10" height="26" rx="1" fill="#22282c"/>`;
       return `
         <svg viewBox="0 0 400 292" id="house" role="img" aria-label="Haus mit PV und Speicher">
           <defs>
-            <linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aebec6"/><stop offset="1" stop-color="#8397a1"/></linearGradient>
-            <linearGradient id="gRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fa2ac"/><stop offset="1" stop-color="#6f828c"/></linearGradient>
-            <linearGradient id="gPanel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2c3a49"/><stop offset="1" stop-color="#16202b"/></linearGradient>
+            <linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b3c3cb"/><stop offset="1" stop-color="#8a9da7"/></linearGradient>
+            <linearGradient id="gSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8396a0"/><stop offset="1" stop-color="#6c7e88"/></linearGradient>
+            <linearGradient id="gRoof" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b9ea8"/><stop offset="1" stop-color="#6d808a"/></linearGradient>
+            <linearGradient id="gPanel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34495f"/><stop offset=".55" stop-color="#1c2b3b"/><stop offset="1" stop-color="#121b26"/></linearGradient>
+            <linearGradient id="gSheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset=".6" stop-color="#fff" stop-opacity=".04"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
             <linearGradient id="gWin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff8a1f"/></linearGradient>
             <radialGradient id="gGlow"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
-            <clipPath id="cRoof"><polygon points="132,112 232,38 332,112"/></clipPath>
-            <pattern id="pGrid" width="14" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(-36)"><path d="M14 0H0V10" fill="none" stroke="#5b6f84" stroke-width=".7"/></pattern>
+            <radialGradient id="gSun"><stop offset="0" stop-color="#fff2b0" stop-opacity=".9"/><stop offset="1" stop-color="#ffd24d" stop-opacity="0"/></radialGradient>
           </defs>
-          <ellipse cx="200" cy="222" rx="190" ry="20" fill="#0f1c15" opacity=".8"/>
-          <rect x="22" y="200" width="356" height="16" rx="8" fill="#6e8089"/>
-          <!-- Garage -->
-          <rect x="34" y="150" width="112" height="54" fill="url(#gWall)"/>
-          <rect x="30" y="144" width="120" height="9" rx="2" fill="#7b8d97"/>
-          <rect x="62" y="166" width="58" height="38" rx="2" fill="#a9b9c1" stroke="#7a8c96"/>
-          <path d="M62 174H120M62 182H120M62 190H120M62 198H120" stroke="#8ea0aa" stroke-width="1"/>
-          <rect x="38" y="160" width="14" height="18" rx="2" fill="url(#gWin)" opacity=".9"/>
-          <!-- Haus -->
-          <rect x="146" y="112" width="186" height="92" fill="url(#gWall)"/>
-          <polygon points="132,112 232,38 332,112" fill="url(#gRoof)"/>
-          <g clip-path="url(#cRoof)">
-            <polygon points="140,108 232,42 262,66 170,132" fill="url(#gPanel)" stroke="#51657a" stroke-width="1.2"/>
-            <polygon points="140,108 232,42 262,66 170,132" fill="url(#pGrid)"/>
+          <ellipse cx="200" cy="224" rx="192" ry="20" fill="#0f1c15" opacity=".8"/>
+          <!-- Bodenplatte -->
+          <polygon points="14,200 392,200 392,214 14,214" fill="#6a7c86"/>
+          <polygon points="14,200 392,200 380,194 26,194" fill="#7f929c"/>
+          <!-- Seitenwand rechts und Giebel -->
+          <polygon points="300,112 340,90 340,182 300,204" fill="url(#gSide)"/>
+          <polygon points="300,112 340,90 320,57" fill="#a3b4bd" stroke="#8a9ba5" stroke-width=".8"/>
+          <polygon points="316,150 332,141 332,167 316,176" fill="url(#gWin)" opacity=".5" stroke="#cdd9df" stroke-width="1.2"/>
+          <!-- Frontwand -->
+          <rect x="128" y="112" width="172" height="92" fill="url(#gWall)"/>
+          <rect x="128" y="196" width="172" height="8" fill="#76888f"/>
+          <!-- Dach: Vorderfläche mit Dachkante -->
+          <polygon points="${pt(A)} ${pt(B)} ${pt(R2)} ${pt(R1)}" fill="url(#gRoof)" stroke="#9db0ba" stroke-width="1"/>
+          <polygon points="${A[0] - 4},112 ${B[0] + 4},112 ${B[0] + 4},118 ${A[0] - 4},118" fill="#5f717b"/>
+          <!-- Solarmodule -->
+          <g id="panels">${panels}
+            <polygon points="${sheen.map(pt).join(" ")}" fill="url(#gSheen)"/>
+            <ellipse id="sun" cx="232" cy="84" rx="60" ry="30" fill="url(#gSun)" opacity="0"/>
           </g>
-          <ellipse id="glow" cx="262" cy="150" rx="60" ry="46" fill="url(#gGlow)" opacity="0"/>
-          <rect id="win" x="238" y="128" width="52" height="46" rx="3" fill="url(#gWin)" opacity=".18" stroke="#c9d6dc" stroke-width="2"/>
-          <path d="M264 128V174M238 151H290" stroke="#c9d6dc" stroke-width="1.6"/>
-          <rect x="168" y="140" width="34" height="46" rx="2" fill="#7b8d97"/>
-          <!-- Speicher -->
-          <g id="batt">
-            <rect x="338" y="158" width="14" height="46" rx="2" fill="#2f353a" stroke="#4a535a"/>
-            <rect x="354" y="158" width="14" height="46" rx="2" fill="#2f353a" stroke="#4a535a"/>
-            <circle id="led1" cx="345" cy="168" r="2.4" fill="#888"/><circle id="led2" cx="361" cy="168" r="2.4" fill="#888"/>
-            <rect x="341" y="176" width="8" height="22" rx="1" fill="#242a2e"/><rect x="357" y="176" width="8" height="22" rx="1" fill="#242a2e"/>
+          <!-- Fenster und Tür -->
+          <ellipse id="glow" cx="232" cy="152" rx="62" ry="46" fill="url(#gGlow)" opacity="0"/>
+          <rect id="win" x="204" y="128" width="56" height="46" rx="3" fill="url(#gWin)" opacity=".18" stroke="#cfdbe1" stroke-width="2"/>
+          <path d="M232 128V174M204 151H260" stroke="#cfdbe1" stroke-width="1.6"/>
+          <rect x="150" y="140" width="32" height="56" rx="2" fill="#7b8d97" stroke="#9aaab3"/>
+          <circle cx="176" cy="170" r="1.6" fill="#d7e0e5"/>
+          <!-- Garage (vorne links) mit Oberseite -->
+          <polygon points="20,150 128,150 150,139 42,139" fill="#8fa1ab"/>
+          <rect x="20" y="150" width="108" height="54" fill="url(#gWall)"/>
+          <rect x="20" y="150" width="108" height="6" fill="#7b8d97"/>
+          <rect x="44" y="166" width="62" height="38" rx="2" fill="#aebdc5" stroke="#7a8c96"/>
+          <path d="M44 174H106M44 182H106M44 190H106M44 198H106" stroke="#8ea0aa" stroke-width="1"/>
+          <rect x="24" y="160" width="12" height="16" rx="2" fill="url(#gWin)" opacity=".9"/>
+          <!-- Speicher mit 3D-Flächen -->
+          <g id="batt">${battery(346)}${battery(368)}
+            <circle id="led1" cx="354" cy="168" r="2.4" fill="#888"/><circle id="led2" cx="376" cy="168" r="2.4" fill="#888"/>
           </g>
           <!-- Leitungen -->
-          <path id="p-pv" d="M262 66 L346 66 L346 158" fill="none" stroke="#51606a" stroke-width="2" opacity=".55"/>
-          <path id="p-bat" d="M338 188 L318 188 L318 205 L214 205 L214 188" fill="none" stroke="#51606a" stroke-width="2" opacity=".55"/>
-          <path id="p-grid" d="M146 190 L96 190 L96 204 L22 204" fill="none" stroke="#51606a" stroke-width="2" opacity=".55"/>
+          <path id="p-pv" d="M322 72 L362 72 L362 150" fill="none" stroke="#51606a" stroke-width="2" opacity=".45"/>
+          <path id="p-bat" d="M346 198 L330 198 L330 208 L214 208 L214 198" fill="none" stroke="#51606a" stroke-width="2" opacity=".45"/>
+          <path id="p-grid" d="M128 190 L84 190 L84 208 L18 208" fill="none" stroke="#51606a" stroke-width="2" opacity=".45"/>
           <circle class="flowdot" id="d-pv" r="3.4" fill="${C.pv}"/>
           <circle class="flowdot" id="d-bat" r="3.4" fill="${C.green}"/>
           <circle class="flowdot" id="d-grid" r="3.4" fill="${C.blue}"/>
@@ -311,6 +350,7 @@
       const lit = house !== null && house > 30 ? Math.min(1, 0.45 + house / 3000) : 0.18;
       $("win").setAttribute("opacity", lit);
       $("glow").setAttribute("opacity", house !== null && house > 30 ? Math.min(0.9, lit) : 0);
+      $("sun").setAttribute("opacity", pv !== null && pv > 20 ? Math.min(0.85, 0.25 + pv / 4000) : 0);
       const led = (dis || 0) > 10 ? C.green : (ch || 0) > 10 ? C.blue : "#888";
       $("led1").setAttribute("fill", led); $("led2").setAttribute("fill", led);
 
