@@ -3,12 +3,24 @@
     "step": {
       "user": {
         "title": "Set up Maxxicharge",
-        "description": "Looks for CCUs that announced themselves on the broker via MQTT autodiscovery. The MQTT integration must be set up.",
+        "description": "**How to connect the CCU to MQTT (one time):**\n\n1. Open `http://CCU-IP/integrations/mqtt` in your browser (the page has no login, use it only in your home network).\n2. Switch “MQTT connection” on. Broker address: `{broker}`, port: `{port}`.\n3. Switch “Login” on and enter user and password of a Home Assistant user (ideally a dedicated MQTT-only user).\n4. Save.\n\nRequires firmware **2.42.103 or newer** (reading) and **2.43 or newer** to change settings. If the CCU is already connected just click “Submit”. The search takes up to 10 seconds.",
         "data": {
           "discovery_prefix": "Discovery prefix"
         },
         "data_description": {
           "discovery_prefix": "Default is “homeassistant”. Change only if your CCU uses another prefix."
+        }
+      },
+      "mqtt_missing": {
+        "title": "Set up MQTT in Home Assistant",
+        "description": "The CCU speaks MQTT, so Home Assistant needs a broker.\n\n**No broker yet?** Install the **Mosquitto broker** add-on (Settings → Add-ons → Add-on store), start it and then open [the MQTT setup](/config/integrations/dashboard/add?domain=mqtt). Usually “Submit” is enough there.\n\n**Already have a broker?** Set up address, port and credentials in [the MQTT setup](/config/integrations/dashboard/add?domain=mqtt).\n\nThen click “Submit” and I will check the connection again."
+      },
+      "no_ccu": {
+        "title": "No CCU found",
+        "description": "No new CCU announced itself on the broker. Check:\n\n- Is MQTT switched on at the CCU (`http://CCU-IP/integrations/mqtt`)? Broker `{broker}`, port `{port}`.\n- Are user and password correct?\n- Is the firmware at least 2.42.103?\n- Are the CCU and Home Assistant on the same network?\n\nAfter saving on the CCU it takes a few seconds until it shows up.",
+        "menu_options": {
+          "retry": "Search again",
+          "manual": "Enter CCU ID manually"
         }
       },
       "select": {

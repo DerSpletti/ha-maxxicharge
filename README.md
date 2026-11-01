@@ -27,6 +27,21 @@ installieren → Home Assistant neu starten.
 
 **Manuell:** Ordner `custom_components/maxxicharge` nach `<config>/custom_components/` kopieren, neu starten.
 
+## Einrichtung von null (ohne vorhandenes MQTT)
+Der Assistent führt dich durch alles. Du brauchst nur Home Assistant und die CCU im selben Netz.
+1. **MQTT in Home Assistant:** Fehlt die MQTT-Integration, erklärt der Assistent, wie du das Add-on
+   *Mosquitto broker* installierst und die MQTT-Integration einrichtest, und prüft danach erneut.
+2. **CCU mit dem Broker verbinden:** Der Assistent zeigt Broker-Adresse und Port. An der CCU öffnest du
+   `http://<IP-DER-CCU>/integrations/mqtt`, schaltest „MQTT-Verbindung“ und „Anmeldung“ ein und trägst
+   Broker, Port 1883 sowie Benutzer und Passwort eines Home-Assistant-Benutzers ein (am besten ein eigener
+   Benutzer nur für MQTT). Speichern.
+3. **CCU finden:** Der Assistent lauscht am Broker und zeigt die gefundenen CCUs. Findet er keine, bekommt
+   er Hinweise zur Fehlersuche und kann erneut suchen.
+
+Hinweise: Benötigt Firmware ≥ 2.42.103 (Lesen), ≥ 2.43 zum Ändern. Die MQTT-Seite der CCU hat keinen
+Login und MQTT läuft unverschlüsselt: nur im Heimnetz betreiben. (Der CCU-Ablauf stammt aus einem
+Praxisbericht, es gibt keine offizielle Maxxisun-Doku dazu.)
+
 ## Einrichtung
 1. Einstellungen → Geräte & Dienste → Integration hinzufügen → **Maxxicharge**.
 2. Discovery-Präfix bestätigen (Standard `homeassistant`).

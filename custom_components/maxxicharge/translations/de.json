@@ -3,12 +3,24 @@
     "step": {
       "user": {
         "title": "Maxxicharge einrichten",
-        "description": "Sucht CCUs, die sich per MQTT-Autodiscovery am Broker angemeldet haben. Die MQTT-Integration muss eingerichtet sein.",
+        "description": "**So verbindest du die CCU mit MQTT (einmalig):**\n\n1. Öffne im Browser `http://IP-DER-CCU/integrations/mqtt` (die Seite hat keinen Login, nur im Heimnetz verwenden).\n2. „MQTT-Verbindung“ einschalten. Broker-Adresse: `{broker}`, Port: `{port}`.\n3. „Anmeldung“ einschalten und Benutzer und Passwort eines Home-Assistant-Benutzers eintragen (am besten ein eigener Benutzer nur für MQTT).\n4. Speichern.\n\nVoraussetzung: Firmware **2.42.103 oder neuer** (Lesen), **2.43 oder neuer** zum Ändern von Einstellungen. Ist die CCU schon verbunden, klicke einfach auf „Absenden“. Die Suche dauert bis zu 10 Sekunden.",
         "data": {
           "discovery_prefix": "Discovery-Präfix"
         },
         "data_description": {
           "discovery_prefix": "Standard ist „homeassistant“. Nur ändern, wenn die CCU anders konfiguriert ist."
+        }
+      },
+      "mqtt_missing": {
+        "title": "MQTT in Home Assistant einrichten",
+        "description": "Die CCU spricht MQTT, dafür braucht Home Assistant einen Broker.\n\n**Noch kein Broker?** Installiere das Add-on **Mosquitto broker** (Einstellungen → Add-ons → Add-on-Store), starte es und öffne danach [die MQTT-Einrichtung](/config/integrations/dashboard/add?domain=mqtt). Dort genügt meist „Absenden“.\n\n**Schon ein Broker vorhanden?** Richte in [der MQTT-Einrichtung](/config/integrations/dashboard/add?domain=mqtt) Adresse, Port und Zugangsdaten ein.\n\nKlicke danach auf „Absenden“, ich prüfe die Verbindung erneut."
+      },
+      "no_ccu": {
+        "title": "Keine CCU gefunden",
+        "description": "Am Broker hat sich keine neue CCU gemeldet. Prüfe:\n\n- Ist MQTT an der CCU eingeschaltet (`http://IP-DER-CCU/integrations/mqtt`)? Broker `{broker}`, Port `{port}`.\n- Stimmen Benutzer und Passwort?\n- Ist die Firmware mindestens 2.42.103?\n- Sind CCU und Home Assistant im selben Netz?\n\nNach dem Speichern an der CCU dauert es einige Sekunden, bis sie sich meldet.",
+        "menu_options": {
+          "retry": "Erneut suchen",
+          "manual": "CCU-ID manuell eingeben"
         }
       },
       "select": {

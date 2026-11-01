@@ -82,6 +82,32 @@ def cleanup_autodiscovery(hass: HomeAssistant, ccu_id: str, mode: str) -> int:
     return count
 
 
+async def _mqtt_ready(hass: HomeAssistant) -> bool:
+    """MQTT ist eingerichtet und verbunden."""
+    if not hass.config_entries.async_entries("mqtt"):
+        return False
+    return bool(await mqtt.async_wait_for_mqtt_client(hass))
+
+
+async def _broker_info(hass: HomeAssistant) -> dict[str, str]:
+    """Broker-Daten, die der Nutzer an der CCU eintragen muss (Host so, dass die CCU ihn erreicht)."""
+    host: str | None = None
+    port = 1883
+    entries = hass.config_entries.async_entries("mqtt")
+    if entries:
+        host = entries[0].data.get("broker")
+        port = entries[0].data.get("port", 1883)
+    # Add-on-Namen und Loopback kann die CCU nicht auflösen: dann die IP von Home Assistant
+    if not host or "." not in host or host.startswith("127."):
+        try:
+            from homeassistant.components.network import async_get_source_ip
+
+            host = await async_get_source_ip(hass)
+        except Exception:  # noqa: BLE001
+            host = "<IP von Home Assistant>"
+    return {"broker": str(host), "port": str(port)}
+
+
 def _label(ccu_id: str, specs: dict[str, Spec]) -> str:
     model = next((s.model for s in specs.values() if s.model), "CCU")
     return f"{ccu_id} ({model}, {len(specs)} Entities)"
@@ -95,10 +121,12 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._prefix = DEFAULT_PREFIX
         self._found: dict[str, dict[str, Spec]] = {}
+        self._ph: dict[str, str] = {"broker": "?", "port": "1883"}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        if not await mqtt.async_wait_for_mqtt_client(self.hass):
-            return self.async_abort(reason="mqtt_not_ready")
+        if not await _mqtt_ready(self.hass):
+            return await self.async_step_mqtt_missing()
+        self._ph = await _broker_info(self.hass)
         if user_input is not None:
             self._prefix = user_input[CONF_PREFIX].strip().strip("/") or DEFAULT_PREFIX
             found = await async_collect(self.hass, self._prefix)
@@ -108,11 +136,26 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_select()
             if found:
                 return self.async_abort(reason="already_configured")
-            return await self.async_step_manual()
+            return self.async_show_menu(
+                step_id="no_ccu",
+                menu_options=["retry", "manual"],
+                description_placeholders=self._ph,
+            )
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({vol.Required(CONF_PREFIX, default=DEFAULT_PREFIX): str}),
+            description_placeholders=self._ph,
         )
+
+    async def async_step_mqtt_missing(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """MQTT fehlt in Home Assistant: erklären, dann erneut prüfen."""
+        if user_input is not None:
+            return await self.async_step_user()
+        return self.async_show_form(step_id="mqtt_missing", data_schema=vol.Schema({}))
+
+    async def async_step_retry(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Erneut nach CCUs suchen."""
+        return await self.async_step_user({CONF_PREFIX: self._prefix})
 
     async def async_step_select(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         options = {k: _label(k, v) for k, v in self._found.items()}
