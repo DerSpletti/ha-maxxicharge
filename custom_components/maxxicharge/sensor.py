@@ -18,7 +18,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 
 from . import calc
-from .const import CATALOG, CONF_KIND, DERIVED, G_DIAG_OFF, KIND_CCU, KIND_TOTAL, TICK
+from .const import CATALOG, CONF_KIND, DERIVED, G_DIAG_OFF, KIND_CCU, KIND_TOTAL, OPERATING_MODES_DE, TICK
 from .coordinator import MaxxiCoordinator, capacity_kwh, to_kwh
 from .entity import MaxxiEntity
 
@@ -125,6 +125,8 @@ class MaxxiSensor(MaxxiEntity, SensorEntity):
     @property
     def native_value(self) -> float | str | None:
         val = self.coordinator.value(self._name)
+        if val is not None and self._name == "Operating Mode" and self.hass.config.language.startswith("de"):
+            return OPERATING_MODES_DE.get(val.strip().lower(), val)  # unbekannte Werte unverändert
         if val is None or not self._numeric:
             return val
         try:

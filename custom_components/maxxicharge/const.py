@@ -187,3 +187,30 @@ SELECT_LABELS_DE = {
     "Time Plan": "Zeitplan",
     "Price Plan": "Preisplan",
 }
+
+# Betriebsmodus der CCU (kommt englisch aus der CCU) für deutsche Oberfläche; unbekannte Werte bleiben unverändert
+OPERATING_MODES_DE = {
+    "self consumption": "Eigenverbrauch",
+    "self-consumption": "Eigenverbrauch",
+    "charge": "Laden",
+    "charging": "Laden",
+    "discharge": "Entladen",
+    "discharging": "Entladen",
+    "idle": "Bereit",
+    "standby": "Bereitschaft",
+    "bypass": "Bypass",
+    "ups": "USV",
+    "ups mode": "USV-Betrieb",
+    "backup": "Notstrom",
+    "off": "Aus",
+    "auto": "Automatisch",
+    "automatic": "Automatisch",
+    "fault": "Störung",
+    "error": "Fehler",
+    "time plan": "Zeitplan",
+    "price plan": "Preisplan",
+    "grid charge": "Laden aus dem Netz",
+    "feed in": "Einspeisen",
+    "feed-in": "Einspeisen",
+    "zero feed-in": "Nulleinspeisung",
+}

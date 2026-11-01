@@ -3,6 +3,12 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.4.1] – 2026-11-01
+### Geändert
+- **Betriebsmodus auf Deutsch** (z. B. „Eigenverbrauch“, „Laden“), wenn Home Assistant auf Deutsch läuft. Unbekannte Werte
+  bleiben unverändert.
+- README mit Banner, Kartenvorschau, Schaubildern, FAQ und Liste der unterstützten Geräte (CCU V2+ unterstützt, CCU V2 ohne MQTT nicht).
+
 ## [0.4.0] – 2026-11-01
 ### Neu
 - **Automatische Erkennung weiterer CCUs:** Meldet sich eine unbekannte CCU am Broker, erscheint sie unter
@@ -60,6 +66,7 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Schreiben der Einstellungen mit Prüfung der Rückmeldung (Fehler im UI statt stillem Zurückspringen).
 - Abgeleitete Werte, Config- und Options-Flow, Diagnose, Firmware-Hinweis (Schreiben ab 2.43).
 
+[0.4.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.1
 [0.4.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.0
 [0.3.6]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.6
 [0.3.5]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.5
