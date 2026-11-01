@@ -3,122 +3,56 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
-## [0.7.0] – 2026-11-01
-### Neu
-- **Umschalter in der Karte:** Reiter für „Maxxicharge Gesamt“ und jede CCU direkt im Kopf der Karte. Ein Klick wechselt die Anzeige, die Auswahl wird im
-  Browser gemerkt. Option `switcher` (Standard: an, solange kein festes Gerät eingestellt ist), auch im Karten-Editor.
+## [1.0.0] – 2026-11-01
+Erste veröffentlichte Version. Inoffizielle Integration für die **Maxxisun CCU V2 und V2+** per MQTT.
 
-## [0.6.2] – 2026-11-01
-### Geändert
-- **Ehrliche Meldung, wenn eine CCU eine Einstellung nie zurückmeldet** (z. B. CCU 79D8 mit Firmware 2.43.21): Statt „nicht übernommen“ steht dort
-  „an die CCU gesendet, aber nicht bestätigt“. Der Befehl kann trotzdem angenommen worden sein.
-- **Diagnose:** Der eingebaute Broker nennt im Log einmal je Topic, was die CCUs außer den bekannten Werten senden (z. B. Antworten auf Befehle).
-  Die Integration warnt einmalig im Log, welche Einstellungen eine CCU nicht zurückmeldet.
+### Einrichtung
+- **Geführter Assistent:** Willkommensseite mit allem, was man braucht (IP, Port, Benutzer, Passwort), Anleitung für die Maxxisun-App
+  („Smart Home Integration“), Suche der CCUs am Broker, Auswahl.
+- **Nichts extra installieren:** Ohne MQTT in Home Assistant startet die Integration einen **eigenen kleinen MQTT-Broker** (reines Python,
+  MQTT 3.1.1 und 5, Login, Retained, Last Will). Ein vorhandenes MQTT (z. B. Mosquitto) wird genutzt.
+- **Mehrere CCUs:** Jede CCU ist ein eigener Eintrag. Neue CCUs erscheinen später automatisch unter *Geräte & Dienste* als „Entdeckt“.
+- **Fehlersuche im Dialog:** Zeigt verbundene und abgelehnte CCUs samt Grund (Benutzername, Passwort, Groß-/Kleinschreibung, Leerzeichen).
+  Abgelehnte CCUs erscheinen zusätzlich unter *Reparaturen*.
+- **Optionen:** Verbindungsdaten für die CCU anzeigen, Passwort des eingebauten Brokers ändern, IP, Modell festlegen, alte
+  Autodiscovery-Entities deaktivieren (nichts wird gelöscht).
 
-## [0.6.1] – 2026-11-01
-### Geändert
-- **Modellerkennung:** Nur `CCU2_PLUS` gilt als **CCU V2+**. Jede andere Antwort der CCU (auch `UNKNOWN`) wird als normale **CCU V2** angezeigt.
-  „Unbekannt“ erscheint nur noch, wenn die CCU nicht antwortet.
+### Werte
+- **Aufgeräumt:** Rund 70 Werte je CCU als Hauptwerte, Energie, Konfiguration und Diagnose mit deutschen Namen, ein Gerät pro CCU.
+  Rohwerte (Status-Bits, Meldezeiten, Alter, Wandler-Einzelwerte) sind standardmäßig deaktiviert.
+- **Abgeleitet je CCU:** Speicher voll/leer, nutzbare Restenergie in kWh, Einspeisung ins Haus, AC-Aufnahme, Netz- und Batteriebilanz,
+  Wirkungsgrad, Ladezyklen, Restlaufzeit, Zeit bis voll.
+- **Gesamtübersicht „Maxxicharge Gesamt“** über alle CCUs: Ladestand (nach Kapazität gewichtet), nutzbare Restenergie, Leistungen,
+  Hausverbrauch, Autarkiegrad, Eigenverbrauchsquote, Restlaufzeit, Zeit bis voll, Störung, Verbindung.
+- **Lesbare Anzeige:** Betriebsmodus auf Deutsch, Laufzeit als „2 Tage 1 Std 44 Min“, Ladestrategie „Dynamixx“.
+- **Modellerkennung:** CCU V2 oder V2+ über `/api/info` der CCU, als Gerätemodell und Diagnose-Sensor „Modell“, von Hand änderbar.
 
-## [0.6.0] – 2026-11-01
-### Neu
-- **Modellerkennung CCU V2 / V2+:** Die Integration liest `/api/info` jeder CCU und zeigt das Modell als Gerätemodell und als Diagnose-Sensor
-  „Modell“. Meldet die CCU kein bekanntes Modell, lässt es sich in den Optionen von Hand festlegen.
-### Geändert
-- Alle Beschriftungen sprechen jetzt von **CCU V2 und V2+** (README, Banner, HACS-Name). Die Liste der unterstützten Geräte wurde angepasst.
+### Einstellungen ändern
+- Maximale Ausgangs- und Ladeleistung, Mindest-/Maximaler Ladestand, Leistung bei Zählerausfall, Ladestrategie und USV-Modus.
+- **Geprüftes Schreiben:** Die Integration sendet, wartet bis zu 10 Sekunden auf die Rückmeldung der CCU und meldet sonst einen
+  **Fehler im UI**. Die Entity zeigt immer den echten Wert.
+- **Ehrliche Meldung**, wenn eine CCU eine Einstellung nie zurückmeldet (z. B. ältere Firmware): „gesendet, aber nicht bestätigt“.
+- **Schreibschutz-Schalter** sperrt alle Änderungen an allen CCUs.
+- Firmware unter 2.43 wird erkannt: Schreiben wird verweigert, Hinweis im Log und unter *Reparaturen*.
 
-## [0.5.1] – 2026-11-01
-### Geändert
-- Ladestrategie „Preisplan“ heißt jetzt **„Dynamixx“**, wie bei Maxxisun (in jeder Sprache).
-- **Laufzeit der CCU** wird lesbar angezeigt („22 Std 25 Min“, „2 Tage 0 Std 2 Min“) statt in Sekunden. Die Sekunden stehen als Attribut `sekunden` an der Entity.
+### Dashboard
+- **Karte `custom:maxxicharge-card`** im Stil der Maxxisun-App: Haus mit PV und Speicher, Kacheln, Verlauf „Haushalt“, Kennzahlen.
+- **Modular:** Bausteine (Haus-Grafik, Kacheln, Verlauf, Kennzahlen) und Kacheln einzeln wählbar, Karten-Editor mit Geräteauswahl.
+- **Für jede CCU und die Gesamtübersicht**, mit **Umschalter** direkt in der Karte (Reiter pro Gerät).
+- **Eigene Seite „Maxxicharge“** in der Seitenleiste mit Reitern für Gesamt, jede CCU und „Alle“. Der Knopf „Besuchen“ in den
+  Geräte-Informationen jedes Geräts öffnet sie direkt.
+- Beispiel-Dashboard in `examples/dashboard.yaml`.
 
-## [0.5.0] – 2026-11-01
-### Neu
-- **Karte pro CCU und für die Gesamtübersicht**, im Editor per Geräteauswahl wählbar.
-- **Modulare Karte:** Bausteine (Haus-Grafik, Kacheln, Verlauf, Kennzahlen) und Kacheln einzeln ein- und ausschaltbar,
-  Karten-Editor mit Auswahlfeldern. Ohne Haus-Grafik werden die Kacheln als Raster angezeigt.
-- **Eigene Seite „Maxxicharge“** (Seitenleiste) mit Reitern für Gesamt, jede CCU und „Alle“. Der Knopf „Besuchen“ in den
-  Geräte-Informationen jedes Geräts öffnet sie direkt mit der passenden Karte.
-### Geändert
-- Der Link „Besuchen“ eines Geräts zeigt jetzt auf die Maxxicharge-Seite statt auf die CCU-Weboberfläche. Diese ist über
-  einen Knopf auf der Seite erreichbar.
+### Diagnose und Sicherheit
+- Diagnose-Download mit geschwärzten Zugangsdaten, Log-Hinweise zu Verbindung, Schreibzugriffen und Einstellungen, die eine CCU nicht
+  zurückmeldet, Auflistung unbekannter Topics.
+- Alles läuft lokal, keine Cloud, keine Telemetrie, keine Zusatzpakete.
 
-## [0.4.1] – 2026-11-01
-### Geändert
-- **Betriebsmodus auf Deutsch** (z. B. „Eigenverbrauch“, „Laden“), wenn Home Assistant auf Deutsch läuft. Unbekannte Werte
-  bleiben unverändert.
-- README mit Banner, Kartenvorschau, Schaubildern, FAQ und Liste der unterstützten Geräte (CCU V2+ unterstützt, CCU V2 ohne MQTT nicht).
+### Bekannte Einschränkungen
+- Einstellungen ändern geht erst ab Firmware **2.43**. Eine CCU ohne MQTT-Schnittstelle (vor 2.42.103) lässt sich nicht einbinden.
+- Manche Firmware (z. B. 2.43.21) meldet Einstellungen nicht zurück. Änderungen dort können nicht bestätigt werden.
+- Der eingebaute Broker und die MQTT-Verbindung der CCU sind **unverschlüsselt**: nur im Heimnetz betreiben.
+- Hausverbrauch, Autarkie- und Eigenverbrauchsquote sind Näherungen. Energiezähler der CCU sind Schätzwerte.
+- Das Schreiben von Einstellungen und der Betrieb mit einem vorhandenen MQTT-Broker sind auf echter Hardware noch wenig erprobt.
 
-## [0.4.0] – 2026-11-01
-### Neu
-- **Automatische Erkennung weiterer CCUs:** Meldet sich eine unbekannte CCU am Broker, erscheint sie unter
-  *Geräte & Dienste* als „Entdeckt“ und lässt sich mit einem Klick einrichten.
-- **Konfigurieren als Menü:** Verbindungsdaten für die CCU anzeigen (Broker, Port, Benutzer, Passwort),
-  Passwort des eingebauten Brokers ändern, Einstellungen (IP, alte Entities aufräumen).
-- **Reparaturhinweis**, wenn eine CCU vom eingebauten Broker abgelehnt wird (mit Grund: Benutzername oder Passwort).
-- **Gesamtübersicht** („Maxxicharge Gesamt“, wird automatisch angelegt): Ladestand (kapazitätsgewichtet),
-  nutzbare Restenergie, Leistungen, Hausverbrauch, Autarkiegrad, Eigenverbrauchsquote, Restlaufzeit, Zeit bis voll.
-- **Kennzahlen pro CCU:** Wirkungsgrad, Ladezyklen, Restlaufzeit, Zeit bis voll.
-- **Schreibschutz-Schalter**, der alle Änderungen an den CCUs sperrt.
-- **Dashboard-Karte** `custom:maxxicharge-card` im Stil der Maxxisun-App (Haus, Kacheln, Verlauf), eine Datei ohne Abhängigkeiten.
-### Geändert
-- „AC-Aufnahme (Laden)“ zeigt `0 W` statt `-0 W`.
-- Manifest: `integration_type: hub`, `loggers`.
-- Dokumentation überarbeitet (Deutsch und Englisch), Lizenz und Issue-Vorlagen ergänzt.
-
-## [0.3.6] – 2026-11-01
-### Neu
-- Unterstützung der **Geräte-Discovery** (`homeassistant/device/<ID>/config` mit `cmps`).
-- Diagnose im Assistenten: verbundene und abgelehnte Clients, im Log die Topics nicht erkannter Meldungen.
-### Geändert
-- Abgelehnte Anmeldungen nennen den Grund (Benutzername, Passwort, Groß-/Kleinschreibung, Leerzeichen).
-
-## [0.3.5] – 2026-11-01
-### Geändert
-- Zufallspasswort ohne leicht verwechselbare Zeichen (kein `0/O`, `1/l/I`), gut abtippbar.
-
-## [0.3.4] – 2026-11-01
-### Behoben
-- Logo auf dunklem Hintergrund: Die Buchstaben waren im Original Aussparungen und verschwanden im Dunkelmodus.
-
-## [0.3.3] – 2026-11-01
-### Neu
-- Icon und Logo der Hersteller-Marke im Ordner `brand/`.
-- Der Assistent nennt abgelehnte CCUs am eingebauten Broker.
-
-## [0.3.2] – 2026-11-01
-### Behoben
-- Einrichtungsassistent: Menüschritte brauchten eigene Methoden („Unknown error“), robustere Erkennung der
-  MQTT-Integration.
-
-## [0.3.1] – 2026-11-01
-### Neu
-- Willkommensseite mit allem, was man für die Einrichtung braucht (IP, Port, Benutzer, Passwort).
-
-## [0.3.0] – 2026-11-01
-### Neu
-- **Eingebauter MQTT-Broker** (reines Python, MQTT 3.1.1 und 5): Es muss nichts zusätzlich installiert werden.
-- Gespeicherte Entities, falls sich die CCU beim Start nicht sofort meldet.
-
-## [0.1.0] – 2026-11-01
-### Neu
-- Erste Version: Entities aus der CCU-Discovery, aufgeräumt in Hauptwerte, Energie, Einstellungen und Diagnose.
-- Schreiben der Einstellungen mit Prüfung der Rückmeldung (Fehler im UI statt stillem Zurückspringen).
-- Abgeleitete Werte, Config- und Options-Flow, Diagnose, Firmware-Hinweis (Schreiben ab 2.43).
-
-[0.7.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.7.0
-[0.6.2]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.2
-[0.6.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.1
-[0.6.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.0
-[0.5.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.5.1
-[0.5.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.5.0
-[0.4.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.1
-[0.4.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.0
-[0.3.6]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.6
-[0.3.5]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.5
-[0.3.4]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.4
-[0.3.3]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.3
-[0.3.2]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.2
-[0.3.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.1
-[0.3.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.0
-[0.1.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.1.0
+[1.0.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v1.0.0
