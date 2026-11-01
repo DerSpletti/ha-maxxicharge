@@ -21,6 +21,16 @@ MAX_PACKET = 1_048_576
 MAX_CLIENTS = 20
 MAX_RETAINED = 5000
 CONNECT_TIMEOUT = 10
+UNKNOWN_GRACE = 120  # Sekunden nach dem Start, in denen unbekannte Topics nicht gemeldet werden (Abonnenten starten später)
+
+
+def ccu_client_key(ccu_id: str) -> str:
+    """Endung der MQTT-Client-ID einer CCU: CCU2-B8F8-62C6-06E8 -> C606E8 (Client „ESP32_c606E8“)."""
+    return ccu_id.replace("-", "")[-6:].upper()
+
+
+def client_matches(client_id: str, ccu_id: str) -> bool:
+    return client_id.upper().endswith(ccu_client_key(ccu_id))
 
 
 class Msg(NamedTuple):
@@ -133,6 +143,7 @@ class _Client:
         self.will: tuple[str, bytes, bool] | None = None
         self.connected = False
         self.clean = False
+        self.close_reason: str | None = None
 
     def send(self, data: bytes) -> None:
         if self.writer.is_closing():
@@ -153,6 +164,10 @@ class MiniBroker:
         self._retained: dict[str, bytes] = {}
         self._internal: list[tuple[str, Callable[[Msg], None]]] = []
         self._rejected: dict[str, tuple[float, str]] = {}
+        self.stats: dict[str, dict] = {}  # je Client: verbunden, seit, letzte Nachricht, Schließgrund
+        self.unknown_grace = UNKNOWN_GRACE
+        self._started = 0.0
+        self._connect_listeners: list[Callable[[str], None]] = []
         self.unknown_topics: dict[str, str] = {}  # Topics, die kein Abonnent behandelt (z. B. Antworten der CCU)
         self.on_reject: Callable[[str, str], None] | None = None
         self.on_connect: Callable[[str], None] | None = None
@@ -160,6 +175,7 @@ class MiniBroker:
     # ---------- Lebenszyklus ----------
     async def async_start(self) -> None:
         self._server = await asyncio.start_server(self._handle, self.host, self.port)
+        self._started = time.monotonic()
         _LOGGER.info("Eingebauter MQTT-Broker lauscht auf %s:%s", self.host, self.port)
 
     async def async_stop(self) -> None:
@@ -176,6 +192,23 @@ class MiniBroker:
         self._server = None
         self._clients.clear()
         _LOGGER.info("Eingebauter MQTT-Broker gestoppt")
+
+    def add_connect_listener(self, cb: Callable[[str], None]) -> Callable[[], None]:
+        """Rückruf bei jeder erfolgreichen Anmeldung eines Clients (Client-ID)."""
+        self._connect_listeners.append(cb)
+
+        def _remove() -> None:
+            if cb in self._connect_listeners:
+                self._connect_listeners.remove(cb)
+
+        return _remove
+
+    def client_stat(self, ccu_id: str) -> dict | None:
+        """Verbindungsdaten des Clients dieser CCU (None, wenn sie sich noch nie gemeldet hat)."""
+        for cid, st in self.stats.items():
+            if client_matches(cid, ccu_id):
+                return {"client": cid, **st}
+        return None
 
     def connected_clients(self) -> list[str]:
         return sorted(self._clients)
@@ -229,7 +262,13 @@ class MiniBroker:
                 handled = True
                 text = text if text is not None else payload.decode("utf-8", "replace")
                 self._call(cb, Msg(topic, text))
-        if source is not None and not handled and topic not in self.unknown_topics and len(self.unknown_topics) < 40:
+        if (
+            source is not None
+            and not handled
+            and time.monotonic() - self._started >= self.unknown_grace
+            and topic not in self.unknown_topics
+            and len(self.unknown_topics) < 40
+        ):
             preview = payload.decode("utf-8", "replace")[:200]
             self.unknown_topics[topic] = preview
             _LOGGER.warning("Unbekanntes Topic von Client %s: %s = %s", source.client_id, topic, preview)
@@ -243,6 +282,7 @@ class MiniBroker:
         try:
             await self._session(client, reader)
         except (asyncio.IncompleteReadError, ConnectionError, TimeoutError, ValueError, OSError) as err:
+            client.close_reason = repr(err)[:200]
             _LOGGER.debug("MQTT-Verbindung %s beendet: %r", client.client_id or "?", err)
         except Exception:  # noqa: BLE001
             _LOGGER.exception("Unerwarteter Fehler in MQTT-Verbindung")
@@ -252,6 +292,11 @@ class MiniBroker:
     def _drop(self, client: _Client) -> None:
         if client.connected and self._clients.get(client.client_id) is client:
             del self._clients[client.client_id]
+            st = self.stats.get(client.client_id)
+            if st is not None:
+                st["connected"] = False
+                st["closed_at"] = time.time()
+                st["closed"] = client.close_reason or ("DISCONNECT" if client.clean else "Verbindung ohne Grund beendet")
             if client.will and not client.clean:
                 topic, payload, retain = client.will
                 self._route(topic, payload, retain)
@@ -278,6 +323,7 @@ class MiniBroker:
                 client.send(_packet(0x70, body[:2]))
             elif ptype == 14:
                 client.clean = True
+                client.close_reason = "DISCONNECT"
                 return
             elif ptype not in (4, 5, 7):
                 raise ValueError(f"Paketart {ptype} nicht unterstützt")
@@ -350,6 +396,12 @@ class MiniBroker:
         client.send(b"\x20\x03\x00\x00\x00" if level == 5 else b"\x20\x02\x00\x00")
         _LOGGER.info("MQTT-Client %s verbunden (Protokoll %s)", cid, level)
         self._rejected.pop(cid, None)
+        self.stats[cid] = {"connected": True, "since": time.time(), "last_publish": None, "closed": None, "closed_at": None}
+        for listener in list(self._connect_listeners):
+            try:
+                listener(cid)
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception("Fehler in einem Verbindungs-Listener")
         if self.on_connect:
             try:
                 self.on_connect(cid)
@@ -367,6 +419,9 @@ class MiniBroker:
         payload = r.rest()
         if not topic or "+" in topic or "#" in topic:
             raise ValueError("ungültiges Topic")
+        st = self.stats.get(client.client_id)
+        if st is not None:
+            st["last_publish"] = time.time()
         if qos == 1:
             client.send(_packet(0x40, pid.to_bytes(2, "big")))
         elif qos == 2:

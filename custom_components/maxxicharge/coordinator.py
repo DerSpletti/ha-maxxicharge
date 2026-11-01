@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import ipaddress
 import logging
 import re
+import time
 from typing import Any
 
 import aiohttp
@@ -19,6 +20,7 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_call_later, async_track_time_interval
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
 
@@ -27,6 +29,8 @@ from .const import (
     CONF_CCU_ID,
     CONF_IP,
     CONF_MODEL,
+    CONF_PREFIX,
+    DEFAULT_PREFIX,
     DOMAIN,
     INFO_REFRESH,
     MODEL_AUTO,
@@ -37,7 +41,8 @@ from .const import (
     TICK_SECONDS,
     WRITE_TIMEOUT,
 )
-from .discovery import Spec
+from .broker import client_matches
+from .discovery import Spec, async_collect, specs_to_json
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -81,9 +86,12 @@ def capacity_kwh(c: "MaxxiCoordinator") -> float | None:
 class MaxxiCoordinator:
     """Eine CCU: MQTT-Push, Verfügbarkeit, Firmware und verifiziertes Schreiben."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, specs: dict[str, Spec], bus: Any) -> None:
+    def __init__(
+        self, hass: HomeAssistant, entry: ConfigEntry, specs: dict[str, Spec], bus: Any, source: str = "live"
+    ) -> None:
         self.hass = hass
         self.bus = bus
+        self.source = source  # "live" (frisch von der CCU) oder "cache" (zuletzt gespeichert)
         self.entry = entry
         self.ccu_id: str = entry.data[CONF_CCU_ID]
         self.specs = specs
@@ -101,6 +109,10 @@ class MaxxiCoordinator:
         self._last_avail: bool | None = None
         self._warned_fw = False
         self.model_raw: str | None = None  # `deviceModel` aus /api/info
+        self._last_ip: str | None = None  # zuletzt gemeldete IP der CCU (gemerkt)
+        self._started_at = time.monotonic()
+        self._warned_disc = False
+        self._meta = Store(hass, 1, f"{DOMAIN}.{self.ccu_id}.meta")
 
         for name, spec in specs.items():
             if spec.state_topic:
@@ -114,6 +126,9 @@ class MaxxiCoordinator:
 
     # ---------- Lebenszyklus ----------
     async def async_start(self) -> None:
+        meta = await self._meta.async_load() or {}
+        self.model_raw = meta.get("model_raw")
+        self._last_ip = meta.get("ip")
         for topic in self._by_topic:
             self._unsubs.append(
                 await self.bus.subscribe(topic, self._handle_state)
@@ -128,6 +143,13 @@ class MaxxiCoordinator:
         # Modell der CCU erkennen: kurz nach dem Start (die IP kommt erst per MQTT), danach alle paar Stunden
         self._unsubs.append(async_call_later(self.hass, 20, self._info_job))
         self._unsubs.append(async_call_later(self.hass, 180, self._check_unreported))
+        broker = getattr(self.bus, "broker", None)
+        if broker is not None:  # eingebauter Broker: bei jeder Anmeldung der CCU die Beschreibung prüfen
+            self._unsubs.append(broker.add_connect_listener(self._on_client_connect))
+        (_LOGGER.warning if self.source == "cache" else _LOGGER.info)(
+            "CCU %s: %d Entities, %d Topics abonniert (Quelle: %s)",
+            self.ccu_id, len(self.specs), len(self._by_topic) + (1 if self._avail_topic else 0), self.source,
+        )
         self._unsubs.append(async_track_time_interval(self.hass, self._info_job, timedelta(seconds=INFO_REFRESH)))
 
     @callback
@@ -192,6 +214,9 @@ class MaxxiCoordinator:
                     fut.set_result(True)
         if "CCU ver" in changed:
             self._check_firmware()
+        if "CCU IP" in changed and self.values.get("CCU IP"):
+            self._last_ip = self.values["CCU IP"]
+            self._save_meta()
         self._notify(changed)
         self._notify_availability()
 
@@ -215,6 +240,7 @@ class MaxxiCoordinator:
     def _tick(self, _now: datetime) -> None:
         self._notify_availability()
         self._notify({TICK})
+        self._watchdog()
 
     # ---------- Zustand ----------
     @property
@@ -257,7 +283,92 @@ class MaxxiCoordinator:
 
     @property
     def ip(self) -> str | None:
-        return self.entry.options.get(CONF_IP) or self.entry.data.get(CONF_IP) or self.value("CCU IP")
+        return self.entry.options.get(CONF_IP) or self.entry.data.get(CONF_IP) or self.value("CCU IP") or self._last_ip
+
+    # ---------- Gemerkte Angaben, Selbstheilung, Wächter ----------
+    def _meta_data(self) -> dict[str, Any]:
+        return {"model_raw": self.model_raw, "ip": self._last_ip}
+
+    @callback
+    def _save_meta(self) -> None:
+        self._meta.async_delay_save(self._meta_data, 5)
+
+    @property
+    def _heals(self) -> list[float]:
+        """Zeitpunkte der Selbstheilungen dieser CCU; bleibt über das Neuladen erhalten (kein Endlos-Neuladen)."""
+        return self.hass.data.setdefault(DOMAIN, {}).setdefault("heals", {}).setdefault(self.ccu_id, [])
+
+    @staticmethod
+    def _signature(specs: dict[str, Spec]) -> frozenset:
+        return frozenset(
+            (n, s.state_topic, s.command_topic, s.value_template, s.availability_topic) for n, s in specs.items()
+        )
+
+    @callback
+    def _on_client_connect(self, client_id: str) -> None:
+        """Meldet sich die CCU am eingebauten Broker, kurz danach ihre Beschreibung neu lesen."""
+        if client_matches(client_id, self.ccu_id):
+            self._unsubs.append(async_call_later(self.hass, 8, self._resync_job))
+
+    @callback
+    def _resync_job(self, _now: datetime) -> None:
+        self.hass.async_create_task(self.async_resync())
+
+    async def async_resync(self) -> None:
+        """Beschreibung der CCU neu lesen. Weicht sie von der benutzten ab, wird die Integration neu geladen."""
+        prefix = self.entry.data.get(CONF_PREFIX, DEFAULT_PREFIX)
+        try:
+            found = (await async_collect(self.bus, prefix, self.ccu_id, 6)).get(self.ccu_id)
+        except Exception:  # noqa: BLE001
+            _LOGGER.debug("Neuabgleich für %s fehlgeschlagen", self.ccu_id, exc_info=True)
+            return
+        if not found:
+            return
+        merged = {**self.specs, **found}
+        if self._signature(merged) != self._signature(self.specs):
+            _LOGGER.warning(
+                "CCU %s: Die Beschreibung der CCU weicht von der benutzten ab (%d statt %d Entities), lade neu",
+                self.ccu_id, len(merged), len(self.specs),
+            )
+            await Store(self.hass, 1, f"{DOMAIN}.{self.ccu_id}").async_save(specs_to_json(merged))
+            self._reload()
+
+    @callback
+    def _reload(self) -> None:
+        self.hass.async_create_task(self.hass.config_entries.async_reload(self.entry.entry_id))
+
+    @callback
+    def _watchdog(self) -> None:
+        """Sendet die CCU laut Broker, aber nichts kommt an: Diagnose ins Log und (begrenzt) neu laden."""
+        broker = getattr(self.bus, "broker", None)
+        if broker is None or self.available or time.monotonic() - self._started_at < 90:
+            return
+        stat = broker.client_stat(self.ccu_id)
+        if stat is None or not stat.get("connected"):
+            if not self._warned_disc:
+                self._warned_disc = True
+                _LOGGER.warning(
+                    "CCU %s ist nicht am Broker verbunden. Letzte Trennung: %s (Client: %s)",
+                    self.ccu_id,
+                    (stat or {}).get("closed") or "unbekannt (nie verbunden)",
+                    (stat or {}).get("client", "-"),
+                )
+            return
+        self._warned_disc = False
+        now = time.monotonic()
+        heals = self._heals
+        heals[:] = [t for t in heals if now - t < 3600]
+        last = stat.get("last_publish")
+        _LOGGER.warning(
+            "CCU %s ist am Broker verbunden (Client %s, letzte Nachricht vor %s s), aber es kommen keine Daten an "
+            "(%d Topics abonniert, Quelle: %s)",
+            self.ccu_id, stat.get("client"), "?" if not last else round(time.time() - last),
+            len(self._by_topic), self.source,
+        )
+        if len(heals) < 3:
+            heals.append(now)
+            _LOGGER.warning("CCU %s: lade die Integration neu (Selbstheilung %d von 3 pro Stunde)", self.ccu_id, len(heals))
+            self._reload()
 
     # ---------- Modell (V2 / V2+) ----------
     @property
@@ -301,6 +412,7 @@ class MaxxiCoordinator:
             self.model_raw = raw
             _LOGGER.info("CCU %s meldet das Modell %s (%s)", self.ccu_id, raw, self.model or "unbekannt")
             self._update_device_model()
+            self._save_meta()
             self._notify(None)
 
     @callback
@@ -308,9 +420,10 @@ class MaxxiCoordinator:
         label = self.model
         if not label:
             return
-        device = dr.async_get(self.hass).async_get_device(identifiers={(DOMAIN, self.ccu_id)})
-        if device and device.model != label:
-            dr.async_get(self.hass).async_update_device(device.id, model=label)
+        dev_reg = dr.async_get(self.hass)
+        for device in dr.async_entries_for_config_entry(dev_reg, self.entry.entry_id):
+            if (DOMAIN, self.ccu_id) in device.identifiers and device.model != label:
+                dev_reg.async_update_device(device.id, model=label)
 
     @property
     def device_info(self) -> DeviceInfo:

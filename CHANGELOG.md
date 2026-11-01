@@ -3,6 +3,20 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.9.2] – 2026-11-01
+### Behoben
+- **Eine CCU lieferte nach einem Neustart von Home Assistant keine Daten mehr** (es half nur, den Eintrag neu zu laden). Die Integration vergleicht jetzt nach jeder
+  Anmeldung einer CCU am eingebauten Broker deren Beschreibung mit der benutzten und lädt sich bei Abweichung selbst neu. Eine unvollständige Meldung der CCU
+  verkleinert den gespeicherten Bestand nicht mehr.
+- **Selbstheilung:** Ist eine CCU laut Broker verbunden, aber es kommen 90 Sekunden keine Daten an, lädt sich die Integration neu (höchstens 3 Mal pro Stunde).
+### Neu
+- **Diagnose im Log:** Beim Start steht je CCU, wie viele Topics abonniert sind und woher die Beschreibung kommt. Fehlen Daten, steht dort, ob die CCU am Broker verbunden ist,
+  wann sie zuletzt etwas gesendet hat und warum eine Verbindung beendet wurde.
+- Das **Modell** (V2/V2+) und die **IP** der CCU werden gemerkt und stehen nach einem Neustart sofort wieder zur Verfügung.
+### Geändert
+- Die veraltete Funktion der Geräte-Registry wird nicht mehr benutzt (Warnung im Log ab Home Assistant 2027.8 relevant).
+- Unbekannte Topics meldet der Broker erst nach einer Startphase von 2 Minuten, damit das Log beim Start ruhig bleibt.
+
 ## [0.9.1] – 2026-11-01
 Erste veröffentlichte Version (Vorabversion auf dem Weg zu 1.0). Privat gepflegte Integration für die **Maxxisun CCU V2 und V2+** per MQTT.
 
@@ -55,4 +69,5 @@ Erste veröffentlichte Version (Vorabversion auf dem Weg zu 1.0). Privat gepfleg
 - Hausverbrauch, Autarkie- und Eigenverbrauchsquote sind Näherungen. Energiezähler der CCU sind Schätzwerte.
 - Das Schreiben von Einstellungen und der Betrieb mit einem vorhandenen MQTT-Broker sind auf echter Hardware noch wenig erprobt.
 
+[0.9.2]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.9.2
 [0.9.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.9.1

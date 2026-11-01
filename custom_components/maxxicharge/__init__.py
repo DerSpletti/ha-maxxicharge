@@ -132,11 +132,14 @@ async def _async_setup_ccu(hass: HomeAssistant, entry: MaxxiConfigEntry) -> bool
     cached = await store.async_load()
     # Ohne gespeicherte Entities beim eingebauten Broker länger auf die erste Meldung der CCU warten
     wait = EMBEDDED_WAIT if (mode == MODE_EMBEDDED and not cached) else DISCOVERY_TIMEOUT
-    specs = (await async_collect(bus, prefix, ccu_id, wait)).get(ccu_id)
-    if specs:
+    found = (await async_collect(bus, prefix, ccu_id, wait)).get(ccu_id)
+    cached_specs = specs_from_json(cached) if cached else {}
+    source = "live"
+    if found:
+        specs = {**cached_specs, **found}  # eine unvollständige Meldung der CCU darf den Bestand nicht verkleinern
         await store.async_save(specs_to_json(specs))
     else:  # CCU hat sich noch nicht gemeldet: zuletzt bekannte Entities verwenden
-        specs = specs_from_json(cached) if cached else None
+        specs, source = cached_specs or None, "cache"
         if specs:
             _LOGGER.info("CCU %s hat sich noch nicht gemeldet, nutze gespeicherte Entities", ccu_id)
     if not specs:
@@ -146,7 +149,7 @@ async def _async_setup_ccu(hass: HomeAssistant, entry: MaxxiConfigEntry) -> bool
             translation_placeholders={"ccu": ccu_id},
         )
 
-    coordinator = MaxxiCoordinator(hass, entry, specs, bus)
+    coordinator = MaxxiCoordinator(hass, entry, specs, bus, source)
     await coordinator.async_start()
     entry.runtime_data = coordinator
     entry.async_on_unload(coordinator.async_stop)
