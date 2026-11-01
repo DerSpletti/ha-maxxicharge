@@ -120,10 +120,12 @@
         "title": "Maxxicharge-Optionen",
         "data": {
           "ip": "IP-Adresse der CCU (optional)",
+          "model": "Modell der CCU",
           "cleanup": "Alte Autodiscovery-Entities"
         },
         "data_description": {
           "ip": "Für den lokalen Endpunkt http://<IP>/api/live und den Link im Gerät.",
+          "model": "Wird normalerweise automatisch erkannt (V2 oder V2+). Nur ändern, wenn die CCU kein Modell meldet.",
           "cleanup": "Deaktiviert die doppelten Entities der CCU-Autodiscovery (nichts wird gelöscht) oder aktiviert sie wieder."
         }
       }
@@ -135,6 +137,13 @@
     }
   },
   "selector": {
+    "model": {
+      "options": {
+        "auto": "Automatisch erkennen",
+        "v2": "CCU V2",
+        "v2plus": "CCU V2+"
+      }
+    },
     "cleanup": {
       "options": {
         "none": "Nichts ändern",
@@ -375,6 +384,9 @@
       },
       "last_update": {
         "name": "Letztes Update"
+      },
+      "model": {
+        "name": "Modell"
       },
       "efficiency": {
         "name": "Wirkungsgrad"

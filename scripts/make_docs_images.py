@@ -60,7 +60,7 @@ def banner() -> None:
     w, h = 1200, 300
     img, d = canvas(w, h)
     text(d, (272, 70), "Maxxicharge", font(BOLD, 88), WHITE)
-    text(d, (276, 172), "Maxxisun CCU2 in Home Assistant", font(REG, 38), GREEN)
+    text(d, (276, 172), "Maxxisun CCU V2 und V2+ in Home Assistant", font(REG, 38), GREEN)
     x = 276
     for tag in ("Geführte Einrichtung", "Eingebauter Broker", "Aufgeräumte Werte", "Dashboard-Karte"):
         f = font(REG, 22)
@@ -113,7 +113,7 @@ def architecture() -> None:
         for j, s_ in enumerate(sub):
             text(d, (x + bw / 2, y + 72 + j * 28), s_, font(REG, 20), SOFT, "mm")
 
-    box(24, 48, 230, 130, "CCU 1", ["Maxxisun CCU2", "Firmware 2.43+"])
+    box(24, 48, 230, 130, "CCU 1", ["CCU V2 / V2+", "Firmware 2.42.103+"])
     box(24, 222, 230, 130, "CCU 2", ["weitere CCUs", "jederzeit möglich"])
     box(340, 107, 260, 180, "MQTT-Broker", ["eingebaut (nichts", "zu installieren)", "oder vorhandenes MQTT"], (74, 144, 226))
     box(686, 90, 228, 214, "Maxxicharge", ["liest die Discovery,", "räumt auf, rechnet,", "prüft jedes Schreiben"])

@@ -82,3 +82,13 @@ def format_duration(seconds: float | None, german: bool = True) -> str | None:
         parts.append(f"{h} {'Std' if german else 'h'}")
     parts.append(f"{m} {'Min' if german else 'min'}")
     return " ".join(parts)
+
+
+MODEL_NAMES = {"CCU2_PLUS": "CCU V2+", "CCU2": "CCU V2"}
+
+
+def model_label(raw: str | None) -> str | None:
+    """Modellname aus dem Wert `deviceModel` der CCU (/api/info); None, wenn die CCU keins meldet (z. B. UNKNOWN)."""
+    if not raw:
+        return None
+    return MODEL_NAMES.get(raw.strip().upper())

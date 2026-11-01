@@ -23,6 +23,10 @@ res["dur_days"] = calc.format_duration(172975) == "2 Tage 0 Std 2 Min"
 res["dur_one_day_en"] = calc.format_duration(90000, False) == "1 d 1 h 0 min"
 res["dur_short"] = calc.format_duration(42) == "42 s" and calc.format_duration(None) is None
 
+res["model_plus"] = calc.model_label("CCU2_PLUS") == "CCU V2+" and calc.model_label(" ccu2_plus ") == "CCU V2+"
+res["model_v2"] = calc.model_label("CCU2") == "CCU V2"
+res["model_unknown"] = calc.model_label("UNKNOWN") is None and calc.model_label(None) is None and calc.model_label("") is None
+
 for k, v in res.items():
     print("OK  " if v else "FAIL", k)
 sys.exit(0 if all(res.values()) else 1)

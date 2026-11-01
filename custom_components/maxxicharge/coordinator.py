@@ -5,23 +5,32 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from datetime import datetime, timedelta
+import ipaddress
 import logging
 import re
 from typing import Any
 
+import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
 
+from . import calc
 from .const import (
     CONF_CCU_ID,
     CONF_IP,
+    CONF_MODEL,
     DOMAIN,
+    INFO_REFRESH,
+    MODEL_AUTO,
+    MODEL_LABELS,
     MIN_WRITE_FIRMWARE,
     STALE_AFTER,
     TICK,
@@ -91,6 +100,7 @@ class MaxxiCoordinator:
         self._pl_not_avail = "offline"
         self._last_avail: bool | None = None
         self._warned_fw = False
+        self.model_raw: str | None = None  # `deviceModel` aus /api/info
 
         for name, spec in specs.items():
             if spec.state_topic:
@@ -115,6 +125,9 @@ class MaxxiCoordinator:
         self._unsubs.append(
             async_track_time_interval(self.hass, self._tick, timedelta(seconds=TICK_SECONDS))
         )
+        # Modell der CCU erkennen: kurz nach dem Start (die IP kommt erst per MQTT), danach alle paar Stunden
+        self._unsubs.append(async_call_later(self.hass, 20, self._info_job))
+        self._unsubs.append(async_track_time_interval(self.hass, self._info_job, timedelta(seconds=INFO_REFRESH)))
 
     @callback
     def async_stop(self) -> None:
@@ -245,6 +258,49 @@ class MaxxiCoordinator:
     def ip(self) -> str | None:
         return self.entry.options.get(CONF_IP) or self.entry.data.get(CONF_IP) or self.value("CCU IP")
 
+    # ---------- Modell (V2 / V2+) ----------
+    @property
+    def model(self) -> str | None:
+        """Modellname: von Hand gewählt, sonst von der CCU gemeldet, sonst None."""
+        choice = self.entry.options.get(CONF_MODEL, MODEL_AUTO)
+        if choice in MODEL_LABELS:
+            return MODEL_LABELS[choice]
+        return calc.model_label(self.model_raw)
+
+    @callback
+    def _info_job(self, _now: datetime) -> None:
+        self.hass.async_create_task(self.async_refresh_info())
+
+    async def async_refresh_info(self) -> None:
+        """Modell über http://<IP>/api/info lesen (nur lesend, nur private Adressen)."""
+        ip = self.ip
+        try:
+            if not ip or not ipaddress.ip_address(ip).is_private:
+                return
+            async with async_get_clientsession(self.hass).get(
+                f"http://{ip}/api/info", timeout=aiohttp.ClientTimeout(total=5)
+            ) as resp:
+                if resp.status != 200:
+                    return
+                data = await resp.json(content_type=None)
+        except (aiohttp.ClientError, TimeoutError, ValueError):
+            return
+        raw = data.get("deviceModel") if isinstance(data, dict) else None
+        if isinstance(raw, str) and raw != self.model_raw:
+            self.model_raw = raw
+            _LOGGER.info("CCU %s meldet das Modell %s (%s)", self.ccu_id, raw, self.model or "unbekannt")
+            self._update_device_model()
+            self._notify(None)
+
+    @callback
+    def _update_device_model(self) -> None:
+        label = self.model
+        if not label:
+            return
+        device = dr.async_get(self.hass).async_get_device(identifiers={(DOMAIN, self.ccu_id)})
+        if device and device.model != label:
+            dr.async_get(self.hass).async_update_device(device.id, model=label)
+
     @property
     def device_info(self) -> DeviceInfo:
         model = next((s.model for s in self.specs.values() if s.model), None)
@@ -252,7 +308,7 @@ class MaxxiCoordinator:
             identifiers={(DOMAIN, self.ccu_id)},
             name=f"CCU {self.ccu_id[-4:]}",
             manufacturer="Maxxisun",
-            model=model or "CCU Gen2",
+            model=self.model or model or "Maxxicharge CCU",
             serial_number=self.ccu_id,
             sw_version=self.firmware,
             configuration_url=f"homeassistant://maxxicharge?d={self.ccu_id[-4:]}",  # Maxxicharge-Seite (CCU-Weboberfläche dort verlinkt)

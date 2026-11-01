@@ -100,6 +100,7 @@ async def async_setup_entry(
 
     derived("time_to_full", (rem_n, cp_n), _to_full,
             unit=lambda c: "h", dc=SensorDeviceClass.DURATION, sc=SensorStateClass.MEASUREMENT, digits=1)
+    entities.append(MaxxiModelSensor(c, _ITEMS["model"]))
     entities.append(MaxxiLastUpdateSensor(c, _ITEMS["last_update"]))
     async_add_entities(entities)
 
@@ -191,3 +192,21 @@ class MaxxiLastUpdateSensor(MaxxiEntity, SensorEntity):
     @property
     def native_value(self) -> datetime | None:
         return self.coordinator.last_update
+
+
+class MaxxiModelSensor(MaxxiEntity, SensorEntity):
+    """Modell der CCU (V2 oder V2+), erkannt über /api/info oder in den Optionen festgelegt."""
+
+    always_available = True
+
+    def __init__(self, coordinator: MaxxiCoordinator, item: Any) -> None:
+        super().__init__(coordinator, item.key, item.group, (TICK,), translation_key=item.key)
+
+    @property
+    def native_value(self) -> str:
+        german = self.hass.config.language.startswith("de")
+        return self.coordinator.model or ("Unbekannt" if german else "Unknown")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str | None]:
+        return {"gemeldet": self.coordinator.model_raw}

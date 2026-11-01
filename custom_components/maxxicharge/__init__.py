@@ -1,4 +1,4 @@
-"""Maxxicharge: aufgeräumte, geprüfte Anbindung der Maxxisun-CCU2 über MQTT."""
+"""Maxxicharge: aufgeräumte, geprüfte Anbindung der Maxxisun CCU V2 und V2+ über MQTT."""
 
 from __future__ import annotations
 

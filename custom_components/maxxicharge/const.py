@@ -19,6 +19,10 @@ KIND_CCU = "ccu"
 KIND_TOTAL = "total"
 TOTAL_UNIQUE_ID = "maxxicharge_total"
 TOTAL_TICK = 5  # Sekunden: Aktualisierung der Gesamtwerte
+CONF_MODEL = "model"  # Modell von Hand festlegen: auto / v2 / v2plus
+MODEL_AUTO, MODEL_V2, MODEL_V2PLUS = "auto", "v2", "v2plus"
+MODEL_LABELS = {MODEL_V2: "CCU V2", MODEL_V2PLUS: "CCU V2+"}
+INFO_REFRESH = 6 * 3600  # Sekunden zwischen zwei Abfragen von /api/info
 CONF_MODE = "mode"
 CONF_BROKER_PORT = "broker_port"
 CONF_BROKER_USER = "broker_user"
@@ -152,6 +156,7 @@ DERIVED: list[Item] = [
     Item("empty", "binary_sensor", "Speicher leer", "Battery empty", G_MAIN),
     Item("online", "binary_sensor", "Verbunden", "Connected", G_DIAG),
     Item("write_possible", "binary_sensor", "Schreiben möglich", "Writing possible", G_DIAG),
+    Item("model", "sensor", "Modell", "Model", G_DIAG),
     Item("efficiency", "sensor", "Wirkungsgrad", "Round-trip efficiency", G_ENERGY),
     Item("cycles", "sensor", "Ladezyklen", "Charge cycles", G_ENERGY),
     Item("runtime", "sensor", "Restlaufzeit", "Remaining runtime", G_MAIN),

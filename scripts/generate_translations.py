@@ -74,6 +74,9 @@ TEXT = {
         "not_found": "Für diese CCU wurde keine Discovery-Config am Broker gefunden.",
         "none_selected": "Bitte mindestens eine CCU auswählen.",
         "opt_title": "Maxxicharge-Optionen",
+        "opt_model": "Modell der CCU",
+        "opt_model_d": "Wird normalerweise automatisch erkannt (V2 oder V2+). Nur ändern, wenn die CCU kein Modell meldet.",
+        "m_auto": "Automatisch erkennen",
         "opt_cleanup": "Alte Autodiscovery-Entities",
         "opt_cleanup_d": "Deaktiviert die doppelten Entities der CCU-Autodiscovery (nichts wird gelöscht) oder aktiviert sie wieder.",
         "c_none": "Nichts ändern",
@@ -149,6 +152,9 @@ TEXT = {
         "not_found": "No discovery config for this CCU found on the broker.",
         "none_selected": "Please select at least one CCU.",
         "opt_title": "Maxxicharge options",
+        "opt_model": "CCU model",
+        "opt_model_d": "Normally detected automatically (V2 or V2+). Only change it if the CCU does not report a model.",
+        "m_auto": "Detect automatically",
         "opt_cleanup": "Old autodiscovery entities",
         "opt_cleanup_d": "Disables the duplicate entities from the CCU autodiscovery (nothing is deleted) or re-enables them.",
         "c_none": "Change nothing",
@@ -245,8 +251,8 @@ def build(lang: str) -> dict:
                 "total_info": {"title": t["ot_title"], "description": t["ot_desc"]},
                 "settings": {
                     "title": t["opt_title"],
-                    "data": {"ip": t["ip"], "cleanup": t["opt_cleanup"]},
-                    "data_description": {"ip": t["ip_d"], "cleanup": t["opt_cleanup_d"]},
+                    "data": {"ip": t["ip"], "model": t["opt_model"], "cleanup": t["opt_cleanup"]},
+                    "data_description": {"ip": t["ip_d"], "model": t["opt_model_d"], "cleanup": t["opt_cleanup_d"]},
                 },
             },
             "error": {
@@ -256,6 +262,7 @@ def build(lang: str) -> dict:
             },
         },
         "selector": {
+            "model": {"options": {"auto": t["m_auto"], "v2": "CCU V2", "v2plus": "CCU V2+"}},
             "cleanup": {
                 "options": {"none": t["c_none"], "disable": t["c_disable"], "enable": t["c_enable"]}
             }

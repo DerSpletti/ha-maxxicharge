@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/DerSpletti/ha-maxxicharge/main/docs/images/banner.png" alt="Maxxicharge – Maxxisun CCU2 in Home Assistant" width="100%">
+  <img src="https://raw.githubusercontent.com/DerSpletti/ha-maxxicharge/main/docs/images/banner.png" alt="Maxxicharge – Maxxisun CCU V2 und V2+ in Home Assistant" width="100%">
 </p>
 
 <p align="center">
@@ -57,17 +57,21 @@ Es gibt keine fest eingebauten Topic-Namen: Alles kommt aus der Discovery der CC
 
 ## Voraussetzungen
 - Home Assistant **2025.1** oder neuer
-- Maxxisun CCU2 mit Firmware **2.42.103** oder neuer zum Lesen, **2.43** oder neuer zum Ändern von Einstellungen
+- Maxxisun **CCU V2 oder V2+** mit Firmware **2.42.103** oder neuer zum Lesen, **2.43** oder neuer zum Ändern von Einstellungen
 - CCU und Home Assistant im selben Netz
 
 ### Unterstützte Geräte
-| Gerät | Status |
+| Modell | Status |
 |---|---|
-| **Maxxicharge CCU V2+** (Steuereinheit „CCU2“ / „CCU Gen2“, Firmware ab 2.42.103) | ✅ unterstützt: Lesen ab 2.42.103, Einstellungen ändern ab 2.43 |
-| **Maxxicharge CCU V2** (ältere Steuereinheit ohne MQTT-Schnittstelle) | ❌ noch nicht unterstützt: Sie spricht kein MQTT, auf das diese Integration aufbaut |
+| **Maxxicharge CCU V2+** | ✅ unterstützt: Lesen ab Firmware 2.42.103, Einstellungen ändern ab 2.43 |
+| **Maxxicharge CCU V2** | ✅ unterstützt, sobald die CCU die MQTT-Schnittstelle hat (Firmware ab 2.42.103). Eine CCU mit älterer Firmware ohne MQTT lässt sich nicht einbinden. |
 
-Beide CCU-Typen können nebeneinander am selben Zähler regeln. Die V2 bleibt dabei unberührt, sie taucht in Home Assistant über
-diese Integration nur nicht auf.
+Beide Modelle melden sich mit einer Seriennummer der Form `CCU2-XXXX-XXXX-XXXX` und lassen sich nebeneinander am selben Zähler betreiben.
+
+**Modellerkennung:** Die Integration fragt bei jeder CCU `http://<IP>/api/info` ab (nur lesend, nur Adressen im Heimnetz) und zeigt das
+Ergebnis als Gerätemodell („CCU V2+“ bzw. „CCU V2“) und als Diagnose-Sensor **Modell**. Meldet die CCU kein bekanntes Modell
+(bei einer getesteten CCU steht dort `UNKNOWN`), zeigt der Sensor „Unbekannt“. Dann kannst du das Modell unter
+Eintrag → Konfigurieren → Einstellungen von Hand festlegen. Zuordnung: `CCU2_PLUS` = V2+, `CCU2` = V2.
 
 ## Einrichtung in 4 Schritten
 <p align="center">
@@ -216,7 +220,7 @@ sind geschwärzt.
   Log und legt einen Hinweis unter *Reparaturen* an.
 - **Ältere Firmware meldet Einstellungen teils nicht zurück** (z. B. 2.43.21 bei einer der getesteten CCUs). Die Werte bleiben
   „unbekannt“, und ein Schreibzugriff kann nicht bestätigt werden. Ein Firmware-Update über die Maxxisun-App hilft.
-- Die ältere **Maxxicharge CCU V2** ohne MQTT wird nicht unterstützt (siehe [Unterstützte Geräte](#unterstützte-geräte)).
+- Eine CCU, die keine MQTT-Schnittstelle hat (Firmware vor 2.42.103), wird nicht unterstützt. Siehe [Unterstützte Geräte](#unterstützte-geräte).
 - Der **eingebaute Broker** ist bewusst klein: Anmeldung, Publish/Subscribe, Retained, Last Will, MQTT 3.1.1 und 5,
   **keine Verschlüsselung**, höchstens 20 Clients. Belegt ein anderer Dienst den Port 1883, wähle einen anderen Port.
 - Die MQTT-Verbindung der CCU ist **unverschlüsselt**. Nur im vertrauenswürdigen Heimnetz betreiben.

@@ -47,7 +47,11 @@ from .const import (
     CONF_CLEANUP,
     CONF_IP,
     CONF_MODE,
+    CONF_MODEL,
     CONF_PREFIX,
+    MODEL_AUTO,
+    MODEL_V2,
+    MODEL_V2PLUS,
     DEFAULT_BROKER_PORT,
     DEFAULT_BROKER_USER,
     DEFAULT_PREFIX,
@@ -492,12 +496,21 @@ class MaxxiOptionsFlow(OptionsFlow):
                 cleanup_autodiscovery(
                     self.hass, entry.data[CONF_CCU_ID], user_input.get(CONF_CLEANUP, CLEANUP_NONE)
                 )
-                return self.async_create_entry(data={CONF_IP: ip})
+                return self.async_create_entry(
+                    data={CONF_IP: ip, CONF_MODEL: user_input.get(CONF_MODEL, MODEL_AUTO)}
+                )
         return self.async_show_form(
             step_id="settings",
             data_schema=vol.Schema(
                 {
                     vol.Optional(CONF_IP, default=current_ip): str,
+                    vol.Required(CONF_MODEL, default=entry.options.get(CONF_MODEL, MODEL_AUTO)): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[MODEL_AUTO, MODEL_V2, MODEL_V2PLUS],
+                            mode=SelectSelectorMode.DROPDOWN,
+                            translation_key="model",
+                        )
+                    ),
                     vol.Required(CONF_CLEANUP, default=CLEANUP_NONE): SelectSelector(
                         SelectSelectorConfig(
                             options=[CLEANUP_NONE, CLEANUP_DISABLE, CLEANUP_ENABLE],

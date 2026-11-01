@@ -120,10 +120,12 @@
         "title": "Maxxicharge options",
         "data": {
           "ip": "CCU IP address (optional)",
+          "model": "CCU model",
           "cleanup": "Old autodiscovery entities"
         },
         "data_description": {
           "ip": "Used for the local endpoint http://<IP>/api/live and the device link.",
+          "model": "Normally detected automatically (V2 or V2+). Only change it if the CCU does not report a model.",
           "cleanup": "Disables the duplicate entities from the CCU autodiscovery (nothing is deleted) or re-enables them."
         }
       }
@@ -135,6 +137,13 @@
     }
   },
   "selector": {
+    "model": {
+      "options": {
+        "auto": "Detect automatically",
+        "v2": "CCU V2",
+        "v2plus": "CCU V2+"
+      }
+    },
     "cleanup": {
       "options": {
         "none": "Change nothing",
@@ -375,6 +384,9 @@
       },
       "last_update": {
         "name": "Last update"
+      },
+      "model": {
+        "name": "Model"
       },
       "efficiency": {
         "name": "Round-trip efficiency"

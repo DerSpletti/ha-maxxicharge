@@ -3,6 +3,13 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.6.0] – 2026-11-01
+### Neu
+- **Modellerkennung CCU V2 / V2+:** Die Integration liest `/api/info` jeder CCU und zeigt das Modell als Gerätemodell und als Diagnose-Sensor
+  „Modell“. Meldet die CCU kein bekanntes Modell, lässt es sich in den Optionen von Hand festlegen.
+### Geändert
+- Alle Beschriftungen sprechen jetzt von **CCU V2 und V2+** (README, Banner, HACS-Name). Die Liste der unterstützten Geräte wurde angepasst.
+
 ## [0.5.1] – 2026-11-01
 ### Geändert
 - Ladestrategie „Preisplan“ heißt jetzt **„Dynamixx“**, wie bei Maxxisun (in jeder Sprache).
@@ -82,6 +89,7 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Schreiben der Einstellungen mit Prüfung der Rückmeldung (Fehler im UI statt stillem Zurückspringen).
 - Abgeleitete Werte, Config- und Options-Flow, Diagnose, Firmware-Hinweis (Schreiben ab 2.43).
 
+[0.6.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.0
 [0.5.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.5.1
 [0.5.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.5.0
 [0.4.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.1

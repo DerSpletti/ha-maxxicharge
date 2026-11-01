@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/DerSpletti/ha-maxxicharge/main/docs/images/banner.png" alt="Maxxicharge – Maxxisun CCU2 in Home Assistant" width="100%">
+  <img src="https://raw.githubusercontent.com/DerSpletti/ha-maxxicharge/main/docs/images/banner.png" alt="Maxxicharge – Maxxisun CCU V2 and V2+ in Home Assistant" width="100%">
 </p>
 
 <p align="center">
@@ -56,17 +56,21 @@ comes from the CCU’s discovery.
 
 ## Requirements
 - Home Assistant **2025.1** or newer
-- Maxxisun CCU2 with firmware **2.42.103** or newer for reading, **2.43** or newer to change settings
+- Maxxisun **CCU V2 or V2+** with firmware **2.42.103** or newer for reading, **2.43** or newer to change settings
 - CCU and Home Assistant on the same network
 
 ### Supported devices
-| Device | Status |
+| Model | Status |
 |---|---|
-| **Maxxicharge CCU V2+** (control unit “CCU2” / “CCU Gen2”, firmware 2.42.103+) | ✅ supported: reading from 2.42.103, changing settings from 2.43 |
-| **Maxxicharge CCU V2** (older control unit without an MQTT interface) | ❌ not supported yet: it does not speak MQTT, which this integration builds on |
+| **Maxxicharge CCU V2+** | ✅ supported: reading from firmware 2.42.103, changing settings from 2.43 |
+| **Maxxicharge CCU V2** | ✅ supported as soon as the CCU has the MQTT interface (firmware 2.42.103 or newer). A CCU with older firmware without MQTT cannot be added. |
 
-Both CCU types can regulate side by side on the same meter. The V2 stays untouched; it just does not show up in Home Assistant
-through this integration.
+Both models report a serial number like `CCU2-XXXX-XXXX-XXXX` and can run side by side on the same meter.
+
+**Model detection:** The integration queries `http://<IP>/api/info` on each CCU (read-only, local network addresses only) and shows
+the result as the device model (“CCU V2+” or “CCU V2”) and as the diagnostic sensor **Model**. If the CCU reports no known model
+(one tested CCU says `UNKNOWN`), the sensor shows “Unknown”. You can then set the model by hand under entry → Configure →
+Settings. Mapping: `CCU2_PLUS` = V2+, `CCU2` = V2.
 
 ## Setup in 4 steps
 <p align="center">
@@ -208,7 +212,7 @@ The **diagnostics download** (entry → ⋮ → Download diagnostics) contains t
   notice under *Repairs*.
 - **Older firmware may not report settings back** (e.g. 2.43.21 on one tested CCU). The values stay “unknown” and a write
   cannot be confirmed. A firmware update via the Maxxisun app helps.
-- The older **Maxxicharge CCU V2** without MQTT is not supported (see [Supported devices](#supported-devices)).
+- A CCU without an MQTT interface (firmware before 2.42.103) is not supported. See [Supported devices](#supported-devices).
 - The **built-in broker** is deliberately small: login, publish/subscribe, retained, last will, MQTT 3.1.1 and 5, **no
   encryption**, at most 20 clients. If another service uses port 1883, choose another port.
 - The CCU’s MQTT connection is **unencrypted**. Use it only in a trusted home network.
