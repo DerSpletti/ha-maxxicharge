@@ -165,25 +165,31 @@
           .badge.off { background:#555; color:#ddd; }
           .scene { position:relative; margin-top:4px; }
           .scene svg { width:100%; height:auto; display:block; }
-          .tile { position:absolute; background:rgba(26,32,36,.88); border:1px solid rgba(255,255,255,.13); border-radius:11px; padding:6px 9px 7px; min-width:84px; backdrop-filter:blur(3px); box-shadow:0 2px 10px rgba(0,0,0,.4); }
-          .tile .k { font-size:10.5px; color:#b9c2c6; display:flex; justify-content:space-between; gap:8px; white-space:nowrap; }
-          .tile .v { font-size:17px; font-weight:700; margin-top:1px; white-space:nowrap; }
-          .tile .v small { font-size:11px; font-weight:500; color:#b9c2c6; margin-right:4px; }
-          .bar { height:3px; border-radius:2px; background:rgba(255,255,255,.14); margin-top:5px; overflow:hidden; }
-          .bar i { display:block; height:100%; border-radius:2px; width:0; transition:width .6s; }
-          .t-pv { left:1%; top:8%; } .t-house { right:1%; top:8%; text-align:left; }
-          .t-store { left:11%; bottom:1%; } .t-ccu { right:1%; bottom:1%; }
+          .tile { position:absolute; width:28.5%; min-width:0; overflow:hidden; box-sizing:border-box; background:linear-gradient(160deg,rgba(40,50,55,.92),rgba(20,26,29,.92)); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:7px 10px 8px; backdrop-filter:blur(4px); box-shadow:0 4px 14px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }
+          .tile .k { font-size:10.5px; color:#aeb9bd; display:flex; align-items:center; gap:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+          .tile .k .ic { font-size:12px; } .tile .ts { font-size:10px; color:#c4ced1; font-weight:600; min-height:12px; margin-top:1px; white-space:nowrap; }
+          .tile .v { font-size:19px; font-weight:700; margin-top:2px; white-space:nowrap; letter-spacing:.2px; }
+          .tile .v small { font-size:11px; font-weight:500; color:#aeb9bd; margin-right:4px; }
+          .tile .v .u { font-size:12px; font-weight:600; color:#c4ced1; margin-left:2px; }
+          .bar { height:4px; border-radius:2px; background:rgba(255,255,255,.12); margin-top:6px; overflow:hidden; }
+          .bar i { display:block; height:100%; border-radius:2px; width:0; transition:width .6s; box-shadow:0 0 8px currentColor; }
+          .t-pv { left:2%; top:9%; } .t-house { left:69.5%; top:2%; }
+          .t-grid { left:2%; bottom:1%; } .t-ccu { left:35.75%; bottom:1%; } .t-store { left:69.5%; bottom:1%; }
           .sect { margin:10px 2px 2px; font-size:.78em; letter-spacing:1.3px; color:#9fb0a8; text-transform:uppercase; display:flex; align-items:center; gap:6px; }
           #chart { width:100%; height:auto; display:block; }
           .ax { font-size:9.5px; fill:#8da097; }
           .legend { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px; font-size:.78em; margin-top:2px; }
-          .legend .col { display:flex; flex-direction:column; gap:3px; }
+          .legend .col { display:flex; flex-direction:column; gap:3px; color:#b9c4c0; }
           .legend .col.r { align-items:flex-end; text-align:right; }
           .legend .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
           .legend .r .dot { margin:0 0 0 5px; }
-          .legend .big { font-family:"Roboto Condensed","Arial Narrow",Roboto,sans-serif; font-size:1.7em; font-weight:700; display:flex; gap:12px; }
-          .foot { display:flex; justify-content:space-around; flex-wrap:wrap; gap:4px 14px; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,.08); font-size:.8em; color:#9fb0a8; }
-          .foot span { white-space:nowrap; } .foot b { color:#e8eceb; font-weight:600; }
+          .nums { display:flex; gap:18px; }
+          .num { text-align:center; }
+          .num .n { font-family:"Roboto Condensed","Arial Narrow",Roboto,sans-serif; font-size:2em; font-weight:700; line-height:1.05; }
+          .num .cap { font-size:.78em; color:#9fb0a8; margin-top:1px; }
+          .foot { display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr)); gap:8px; margin-top:12px; }
+          .st { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.07); border-radius:10px; padding:7px 10px; }
+          .st .sl { font-size:.72em; color:#9fb0a8; letter-spacing:.3px; } .st .sv { font-size:1.02em; font-weight:600; color:#eef2f1; margin-top:1px; }
           .msg { padding:18px 8px; color:#9fb0a8; }
           .flowdot { display:none; }
           .on .flowdot { display:inline; }
@@ -194,16 +200,17 @@
           <div id="main">
             <div class="scene">
               ${this._houseSvg()}
-              <div class="tile t-pv"><div class="k">PV Maxxicharge</div><div class="v" id="v-pv">–</div><div class="bar"><i id="b-pv" style="background:linear-gradient(90deg,#f5a623,#ff7a18)"></i></div></div>
-              <div class="tile t-house"><div class="k">Hausverbrauch</div><div class="v" id="v-house">–</div><div class="bar"><i id="b-house" style="background:${C.green}"></i></div></div>
-              <div class="tile t-store"><div class="k"><span>Speicher</span><span id="s-state"></span></div><div class="v" id="v-soc">–</div><div class="bar"><i id="b-soc" style="background:${C.green}"></i></div></div>
-              <div class="tile t-ccu"><div class="k">CCU AC-Abgabe</div><div class="v" id="v-ccu">–</div><div class="bar"><i id="b-ccu" style="background:${C.green}"></i></div></div>
+              <div class="tile t-pv"><div class="k"><span class="ic">☀️</span>PV-Leistung</div><div class="v" id="v-pv">–</div><div class="bar"><i id="b-pv" style="background:linear-gradient(90deg,#f5a623,#ff7a18);color:#ff9a2e"></i></div></div>
+              <div class="tile t-house"><div class="k"><span class="ic">🏠</span>Verbrauch</div><div class="v" id="v-house">–</div><div class="bar"><i id="b-house" style="background:${C.green};color:${C.green}"></i></div></div>
+              <div class="tile t-grid"><div class="k"><span class="ic">⚡</span>Netz</div><div class="v" id="v-grid">–</div><div class="ts" id="s-grid"></div><div class="bar"><i id="b-grid" style="background:${C.blue};color:${C.blue}"></i></div></div>
+              <div class="tile t-ccu"><div class="k"><span class="ic">🔌</span>CCU-Abgabe</div><div class="v" id="v-ccu">–</div><div class="bar"><i id="b-ccu" style="background:${C.ccu};color:${C.ccu}"></i></div></div>
+              <div class="tile t-store"><div class="k"><span class="ic">🔋</span>Speicher</div><div class="v" id="v-soc">–</div><div class="ts" id="s-state"></div><div class="bar"><i id="b-soc" style="background:${C.green};color:${C.green}"></i></div></div>
             </div>
             <div class="sect">⚡ Haushalt</div>
             ${this._chartSvg()}
             <div class="legend">
               <div class="col"><span><span class="dot" style="background:${C.grid}"></span>Netzbezug</span><span><span class="dot" style="background:#7a3050"></span>Einspeisung</span></div>
-              <div class="big"><span id="n-grid" style="color:${C.grid}">–</span><span id="n-ccu" style="color:${C.ccu}">–</span></div>
+              <div class="nums"><div class="num"><div class="n" id="n-grid" style="color:${C.grid}">–</div><div class="cap" id="c-grid">Netzbezug</div></div><div class="num"><div class="n" id="n-ccu" style="color:${C.ccu}">–</div><div class="cap" id="c-ccu">CCU-Abgabe</div></div></div>
               <div class="col r"><span>CCU-Abgabe<span class="dot" style="background:${C.ccu}"></span></span><span>CCU-Aufnahme<span class="dot" style="background:${C.draw}"></span></span></div>
             </div>
             <div class="foot" id="foot"></div>
@@ -243,7 +250,7 @@
         <rect x="${x}" y="158" width="16" height="46" fill="#30373c" stroke="#505a62" stroke-width=".8"/>
         <rect x="${x + 3}" y="170" width="10" height="26" rx="1" fill="#22282c"/>`;
       return `
-        <svg viewBox="0 0 400 292" id="house" role="img" aria-label="Haus mit PV und Speicher">
+        <svg viewBox="0 0 400 316" id="house" role="img" aria-label="Haus mit PV und Speicher">
           <defs>
             <linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b3c3cb"/><stop offset="1" stop-color="#8a9da7"/></linearGradient>
             <linearGradient id="gSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8396a0"/><stop offset="1" stop-color="#6c7e88"/></linearGradient>
@@ -252,8 +259,10 @@
             <linearGradient id="gSheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset=".6" stop-color="#fff" stop-opacity=".04"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
             <linearGradient id="gWin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff8a1f"/></linearGradient>
             <radialGradient id="gGlow"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+            <radialGradient id="gSky"><stop offset="0" stop-color="#1f4a31" stop-opacity=".55"/><stop offset="1" stop-color="#1f4a31" stop-opacity="0"/></radialGradient>
             <radialGradient id="gSun"><stop offset="0" stop-color="#fff2b0" stop-opacity=".9"/><stop offset="1" stop-color="#ffd24d" stop-opacity="0"/></radialGradient>
           </defs>
+          <ellipse cx="200" cy="150" rx="210" ry="140" fill="url(#gSky)"/>
           <ellipse cx="200" cy="224" rx="192" ry="20" fill="#0f1c15" opacity=".8"/>
           <!-- Bodenplatte -->
           <polygon points="14,200 392,200 392,214 14,214" fill="#6a7c86"/>
@@ -290,6 +299,11 @@
           <g id="batt">${battery(346)}${battery(368)}
             <circle id="led1" cx="354" cy="168" r="2.4" fill="#888"/><circle id="led2" cx="376" cy="168" r="2.4" fill="#888"/>
           </g>
+          <!-- Leitlinien von den Kacheln zu den Teilen des Hauses -->
+          <g stroke="rgba(255,255,255,.32)" stroke-width="1" stroke-dasharray="2 3" fill="none">
+            <path d="M116 56 L152 76"/><path d="M324 58 L316 80"/><path d="M57 254 L57 210"/><path d="M200 254 L214 210"/><path d="M366 254 L366 208"/>
+          </g>
+          <g fill="rgba(255,255,255,.7)"><circle cx="152" cy="76" r="2"/><circle cx="316" cy="80" r="2"/><circle cx="57" cy="210" r="2"/><circle cx="214" cy="210" r="2"/><circle cx="366" cy="208" r="2"/></g>
           <!-- Leitungen -->
           <path id="p-pv" d="M322 72 L362 72 L362 150" fill="none" stroke="#51606a" stroke-width="2" opacity=".45"/>
           <path id="p-bat" d="M346 198 L330 198 L330 208 L214 208 L214 198" fill="none" stroke="#51606a" stroke-width="2" opacity=".45"/>
@@ -306,6 +320,8 @@
         <path id="area-grid" fill="${C.grid}" opacity=".16"/>
         <path id="ln-grid" fill="none" stroke="${C.grid}" stroke-width="1.8" stroke-linejoin="round"/>
         <path id="ln-ccu" fill="none" stroke="${C.ccu}" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle id="dot-grid" r="3" fill="${C.grid}" display="none"/>
+        <circle id="dot-ccu" r="3" fill="${C.ccu}" display="none"/>
         <text class="ax" id="t-none" x="200" y="62" text-anchor="middle"></text>
       </svg>`;
     }
@@ -334,13 +350,17 @@
       $("msg").hidden = ok;
       $("main").style.display = ok ? "" : "none";
 
-      $("v-pv").textContent = fmtW(pv);
       $("b-pv").style.width = `${pct(pv, this._config.pv_max)}%`;
-      $("v-house").textContent = fmtW(house);
       $("b-house").style.width = `${pct(house, this._config.house_max)}%`;
       const ccu = feed === null && draw === null ? null : (feed || 0) - (draw || 0);
       const t = this._num("temp");
-      $("v-ccu").innerHTML = `${t !== null ? `<small>${Math.round(t)} °C ·</small>` : ""}${fmtW(ccu === null ? null : Math.max(ccu, 0))}`;
+      const split = (txt) => (txt === "–" ? txt : txt.replace(/ (W|kW)$/, '<span class="u">$1</span>'));
+      $("v-pv").innerHTML = split(fmtW(pv));
+      $("v-house").innerHTML = split(fmtW(house));
+      $("v-grid").innerHTML = split(fmtW(grid === null ? null : Math.abs(grid)));
+      $("b-grid").style.width = `${pct(grid === null ? null : Math.abs(grid), this._config.house_max)}%`;
+      $("s-grid").textContent = grid === null || Math.abs(grid) < 10 ? "" : grid > 0 ? "Bezug" : "Einspeisung";
+      $("v-ccu").innerHTML = `${t !== null ? `<small>${Math.round(t)} °C ·</small>` : ""}${split(fmtW(ccu === null ? null : Math.max(ccu, 0)))}`;
       $("b-ccu").style.width = `${pct(ccu === null ? null : Math.max(ccu, 0), this._config.ccu_max)}%`;
       $("v-soc").textContent = soc === null ? "–" : `${Math.round(soc)} %`;
       $("b-soc").style.width = `${pct(soc, 100)}%`;
@@ -361,15 +381,18 @@
 
       $("n-grid").textContent = fmtW(grid === null ? null : Math.abs(grid));
       $("n-ccu").textContent = fmtW(ccu === null ? null : Math.abs(ccu));
+      $("c-grid").textContent = grid !== null && grid < 0 ? "Einspeisung" : "Netzbezug";
+      $("c-ccu").textContent = ccu !== null && ccu < 0 ? "CCU-Aufnahme" : "CCU-Abgabe";
 
       const usable = this._num("usable"), runtime = this._num("runtime"), ttf = this._num("ttf");
       const autarky = this._num("autarky"), pvToday = this._num("pvtoday");
       const parts = [];
-      if (pvToday !== null) parts.push(`<span>PV heute <b>${pvToday.toFixed(1).replace(".", ",")} kWh</b></span>`);
-      if (autarky !== null) parts.push(`<span>Autarkie <b>${Math.round(autarky)} %</b></span>`);
-      if (runtime !== null) parts.push(`<span>Reicht noch <b>${fmtH(runtime)}</b></span>`);
-      else if (ttf !== null) parts.push(`<span>Voll in <b>${fmtH(ttf)}</b></span>`);
-      if (usable !== null) parts.push(`<span>Nutzbar <b>${usable.toFixed(2).replace(".", ",")} kWh</b></span>`);
+      const stat = (label, value) => `<div class="st"><div class="sl">${label}</div><div class="sv">${value}</div></div>`;
+      if (pvToday !== null) parts.push(stat("PV heute", `${pvToday.toFixed(1).replace(".", ",")} kWh`));
+      if (autarky !== null) parts.push(stat("Autarkie heute", `${Math.round(autarky)} %`));
+      if (runtime !== null) parts.push(stat("Reicht noch", fmtH(runtime)));
+      else if (ttf !== null) parts.push(stat("Voll in", fmtH(ttf)));
+      if (usable !== null) parts.push(stat("Nutzbar", `${usable.toFixed(2).replace(".", ",")} kWh`));
       $("foot").innerHTML = parts.join("");
 
       const badges = [];
@@ -408,6 +431,15 @@
       $("ln-grid").setAttribute("d", gp);
       $("area-grid").setAttribute("d", gp ? `${gp} L${R},${y(0, rg).toFixed(1)} L${L},${y(0, rg).toFixed(1)} Z` : "");
       $("ln-ccu").setAttribute("d", path(this._hist.ccu, rc));
+      const endDot = (id, arr, r) => {
+        let i = arr.length - 1;
+        while (i >= 0 && arr[i] === null) i--;
+        const el = $(id);
+        if (i < 0) { el.setAttribute("display", "none"); return; }
+        el.setAttribute("display", ""); el.setAttribute("cx", L + (i / N) * W); el.setAttribute("cy", y(arr[i], r));
+      };
+      endDot("dot-grid", this._hist.grid, rg);
+      endDot("dot-ccu", this._hist.ccu, rc);
     }
   }
 
