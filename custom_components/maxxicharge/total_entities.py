@@ -46,6 +46,7 @@ def total_device() -> DeviceInfo:
         name="Maxxicharge Gesamt",
         manufacturer="Maxxisun",
         model="Gesamtübersicht",
+        configuration_url="homeassistant://maxxicharge?d=total",
     )
 
 

@@ -134,20 +134,32 @@ Hausverbrauch, Autarkie- und Eigenverbrauchsquote sind **Näherungen** aus Zähl
 geht davon aus, dass alle CCUs am selben Zähler hängen.
 
 ## Dashboard-Karte
-Nach der Einrichtung steht die Karte **Maxxicharge** in der Kartenauswahl (den Browser-Cache einmal neu laden, falls sie
-fehlt). Per YAML:
+Die Karte **Maxxicharge** steht nach der Einrichtung in der Kartenauswahl (den Browser-Cache einmal neu laden, falls sie
+fehlt). Sie funktioniert für die **Gesamtübersicht** und für **jede einzelne CCU** und ist **modular**: Im Karten-Editor wählst du das
+**Gerät**, die **Bausteine** (Haus-Grafik, Kacheln, Verlauf „Haushalt“, Kennzahlen) und die **Kacheln** (PV, Verbrauch, Netz,
+CCU-Abgabe, Speicher) aus. Per YAML:
 ```yaml
 type: custom:maxxicharge-card
-title: Maxxicharge        # optional
-hours: 3                  # Zeitraum des Verlaufs in Stunden
-pv_max: 4000              # Skala der Balken in W (optional)
+device: <Geräte-ID>                       # leer = Maxxicharge Gesamt; im Editor per Auswahl
+modules: [scene, tiles, chart, stats]     # Haus-Grafik, Kacheln, Verlauf, Kennzahlen
+tiles: [pv, house, grid, ccu, store]      # welche Kacheln
+title: Maxxicharge                        # leer = Gerätename
+hours: 3                                  # Zeitraum des Verlaufs in Stunden
+pv_max: 4000                              # Skala der Balken in W (optional)
 house_max: 3000
 ccu_max: 2300
 ```
-Die Karte findet die Entities der Gesamtübersicht automatisch. Einzelne lassen sich überschreiben:
-`entities: { pv: sensor.meine_pv, grid: sensor.mein_netz }`. Schlüssel: `pv`, `charge`, `discharge`, `grid`, `house`,
-`soc`, `feed`, `draw`, `runtime`, `ttf`, `autarky`, `usable`, `pvtoday`, `temp`, `fault`, `lock`, `online`.
-Ein Beispiel für Einzelkarten pro CCU liegt in [`examples/dashboard.yaml`](examples/dashboard.yaml).
+Ohne Haus-Grafik ordnen sich die Kacheln als Raster an, so lässt sich zum Beispiel eine kompakte Karte nur mit Speicher und
+CCU-Abgabe bauen. Einzelne Entities lassen sich überschreiben: `entities: { pv: sensor.meine_pv, grid: sensor.mein_netz }`
+(Schlüssel: `pv`, `charge`, `discharge`, `grid`, `house`, `soc`, `feed`, `draw`, `runtime`, `ttf`, `autarky`, `usable`,
+`pvtoday`, `temp`, `fault`, `lock`, `online`). Bei einer einzelnen CCU gibt es keinen Autarkiegrad. Der Verbrauch wird nur
+berechnet, wenn diese CCU einen Zählerwert hat.
+
+### Maxxicharge-Seite und „Geräte-Informationen“
+Home Assistant erlaubt Integrationen nicht, Karten direkt in die Geräteseite einzubauen. Deshalb gibt es eine eigene Seite
+**Maxxicharge** (Seitenleiste, Adresse `/maxxicharge`) mit Reitern für die Gesamtübersicht, jede CCU und „Alle“. Auf der
+Geräteseite jeder CCU und der Gesamtübersicht führt der Knopf **Besuchen** im Kasten **Geräte-Informationen** direkt zur
+passenden Karte. Die Weboberfläche der CCU erreichst du von dort über den Knopf „CCU-Weboberfläche“.
 
 ## Einstellungen sicher ändern
 Die Integration sendet den Wert und wartet bis zu 10 Sekunden, bis die CCU ihn zurückmeldet. Dann ist er **gespeichert**,

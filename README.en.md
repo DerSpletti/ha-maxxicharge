@@ -130,19 +130,30 @@ self-sufficiency and self-consumption are **approximations** from meter and CCU 
 CCUs share the same meter.
 
 ## Dashboard card
-After setup the card **Maxxicharge** appears in the card picker (reload the browser cache once if it is missing). Via YAML:
+The card **Maxxicharge** appears in the card picker after setup (reload the browser cache once if it is missing). It works for the
+**total overview** and for **each single CCU** and is **modular**: in the card editor you choose the **device**, the **modules**
+(house graphic, tiles, “household” history, statistics) and the **tiles** (PV, consumption, grid, CCU output, storage). Via YAML:
 ```yaml
 type: custom:maxxicharge-card
-title: Maxxicharge        # optional
-hours: 3                  # history range in hours
-pv_max: 4000              # bar scales in W (optional)
+device: <device id>                       # empty = Maxxicharge Gesamt; picked in the editor
+modules: [scene, tiles, chart, stats]     # house graphic, tiles, history, statistics
+tiles: [pv, house, grid, ccu, store]      # which tiles
+title: Maxxicharge                        # empty = device name
+hours: 3                                  # history range in hours
+pv_max: 4000                              # bar scales in W (optional)
 house_max: 3000
 ccu_max: 2300
 ```
-The card finds the entities of the total overview automatically. You can override single ones:
-`entities: { pv: sensor.my_pv, grid: sensor.my_grid }`. Keys: `pv`, `charge`, `discharge`, `grid`, `house`, `soc`, `feed`,
-`draw`, `runtime`, `ttf`, `autarky`, `usable`, `pvtoday`, `temp`, `fault`, `lock`, `online`.
-An example with single cards per CCU is in [`examples/dashboard.yaml`](examples/dashboard.yaml).
+Without the house graphic the tiles form a grid, e.g. for a compact card with only storage and CCU output. You can override
+single entities: `entities: { pv: sensor.my_pv, grid: sensor.my_grid }` (keys: `pv`, `charge`, `discharge`, `grid`, `house`,
+`soc`, `feed`, `draw`, `runtime`, `ttf`, `autarky`, `usable`, `pvtoday`, `temp`, `fault`, `lock`, `online`). A single CCU has
+no self-sufficiency value. Consumption is only calculated if that CCU has a meter value.
+
+### Maxxicharge page and “Device info”
+Home Assistant does not let integrations embed cards directly in the device page. So there is a page of its own,
+**Maxxicharge** (sidebar, address `/maxxicharge`), with tabs for the total overview, each CCU and “All”. On the device page of
+each CCU and of the total overview the **Visit** button in the **Device info** box leads straight to the matching card. The CCU’s web
+interface is reachable from there via the “CCU web interface” button.
 
 ## Changing settings safely
 The integration sends the value and waits up to 10 seconds for the CCU to report it back. Then it is **stored**, which does not

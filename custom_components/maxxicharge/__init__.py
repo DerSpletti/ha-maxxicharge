@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from homeassistant.components import mqtt
+from homeassistant.components import mqtt, panel_custom
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
@@ -43,6 +43,7 @@ _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 CARD_URL = "/maxxicharge/maxxicharge-card.js"
+PANEL_URL = "/maxxicharge/maxxicharge-panel.js"
 TOTAL_PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
 
 PLATFORMS = [
@@ -63,8 +64,20 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         path = Path(__file__).parent / "frontend" / "maxxicharge-card.js"
         await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(path), False)])
         add_extra_js_url(hass, f"{CARD_URL}?v={integration.version}")
-    except Exception:  # noqa: BLE001 - die Karte ist optional, die Integration läuft auch ohne
-        _LOGGER.warning("Maxxicharge-Karte konnte nicht bereitgestellt werden", exc_info=True)
+        panel = Path(__file__).parent / "frontend" / "maxxicharge-panel.js"
+        await hass.http.async_register_static_paths([StaticPathConfig(PANEL_URL, str(panel), False)])
+        await panel_custom.async_register_panel(
+            hass,
+            webcomponent_name="maxxicharge-panel",
+            frontend_url_path="maxxicharge",
+            module_url=f"{PANEL_URL}?v={integration.version}",
+            sidebar_title="Maxxicharge",
+            sidebar_icon="mdi:solar-power-variant",
+            require_admin=False,
+            config={},
+        )
+    except Exception:  # noqa: BLE001 - Karte und Seite sind optional, die Integration läuft auch ohne
+        _LOGGER.warning("Maxxicharge-Karte oder -Seite konnte nicht bereitgestellt werden", exc_info=True)
     return True
 
 

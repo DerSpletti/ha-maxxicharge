@@ -8,7 +8,8 @@
   "dependencies": [
     "mqtt",
     "http",
-    "frontend"
+    "frontend",
+    "panel_custom"
   ],
   "documentation": "https://github.com/DerSpletti/ha-maxxicharge",
   "integration_type": "hub",
@@ -18,5 +19,5 @@
     "custom_components.maxxicharge"
   ],
   "requirements": [],
-  "version": "0.4.1"
+  "version": "0.5.0"
 }

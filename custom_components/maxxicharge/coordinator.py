@@ -255,7 +255,7 @@ class MaxxiCoordinator:
             model=model or "CCU Gen2",
             serial_number=self.ccu_id,
             sw_version=self.firmware,
-            configuration_url=f"http://{self.ip}" if self.ip else None,
+            configuration_url=f"homeassistant://maxxicharge?d={self.ccu_id[-4:]}",  # Maxxicharge-Seite (CCU-Weboberfläche dort verlinkt)
         )
 
     # ---------- Firmware-Hinweis ----------

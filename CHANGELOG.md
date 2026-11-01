@@ -3,6 +3,17 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.5.0] – 2026-11-01
+### Neu
+- **Karte pro CCU und für die Gesamtübersicht**, im Editor per Geräteauswahl wählbar.
+- **Modulare Karte:** Bausteine (Haus-Grafik, Kacheln, Verlauf, Kennzahlen) und Kacheln einzeln ein- und ausschaltbar,
+  Karten-Editor mit Auswahlfeldern. Ohne Haus-Grafik werden die Kacheln als Raster angezeigt.
+- **Eigene Seite „Maxxicharge“** (Seitenleiste) mit Reitern für Gesamt, jede CCU und „Alle“. Der Knopf „Besuchen“ in den
+  Geräte-Informationen jedes Geräts öffnet sie direkt mit der passenden Karte.
+### Geändert
+- Der Link „Besuchen“ eines Geräts zeigt jetzt auf die Maxxicharge-Seite statt auf die CCU-Weboberfläche. Diese ist über
+  einen Knopf auf der Seite erreichbar.
+
 ## [0.4.1] – 2026-11-01
 ### Geändert
 - **Betriebsmodus auf Deutsch** (z. B. „Eigenverbrauch“, „Laden“), wenn Home Assistant auf Deutsch läuft. Unbekannte Werte
@@ -66,6 +77,7 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Schreiben der Einstellungen mit Prüfung der Rückmeldung (Fehler im UI statt stillem Zurückspringen).
 - Abgeleitete Werte, Config- und Options-Flow, Diagnose, Firmware-Hinweis (Schreiben ab 2.43).
 
+[0.5.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.5.0
 [0.4.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.1
 [0.4.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.0
 [0.3.6]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.6

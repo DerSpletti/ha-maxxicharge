@@ -2,16 +2,19 @@
  * Eine Datei, keine Abhängigkeiten. Dashboard: type: custom:maxxicharge-card
  *
  * Optionen (alle optional):
+ *   device: <Geräte-ID>       # CCU oder „Maxxicharge Gesamt“ (ohne Angabe: Gesamtübersicht); im Editor auswählbar
+ *   modules: [scene, tiles, chart, stats]   # Bausteine: Haus-Grafik, Kacheln, Verlauf, Kennzahlen
+ *   tiles: [pv, house, grid, ccu, store]    # welche Kacheln
  *   title: Maxxicharge        # Überschrift
  *   hours: 3                  # Zeitraum des Verlaufs in Stunden
  *   pv_max: 4000              # Skala des PV-Balkens in W
  *   house_max: 3000           # Skala des Verbrauchs-Balkens in W
  *   ccu_max: 2300             # Skala des CCU-Balkens in W
  *   entities: { pv: sensor.xxx, grid: sensor.xxx }   # Entities überschreiben (Schlüssel siehe KEYS)
- * Die Entities der Gesamtübersicht werden sonst automatisch gefunden.
+ * Die Entities werden automatisch gefunden (Gesamtübersicht oder gewählte CCU).
  */
 (() => {
-  const KEYS = {
+  const TOTAL_KEYS = {
     pv: "total_pv_power",
     charge: "total_battery_charge_power",
     discharge: "total_battery_discharge_power",
@@ -30,6 +33,27 @@
     lock: "write_lock",
     online: "total_online",
   };
+  // Entities einer einzelnen CCU (Übersetzungsschlüssel der Integration)
+  const CCU_KEYS = {
+    pv: "pv_power",
+    charge: "battery_charge_power",
+    discharge: "battery_discharge_power",
+    grid: "grid_power",
+    soc: "soc",
+    feed: "ac_feed_power",
+    draw: "ac_draw_power",
+    runtime: "runtime",
+    ttf: "time_to_full",
+    usable: "usable_energy_kwh",
+    pvtoday: "pv_energy_today",
+    temp: "temperature",
+    online: "online",
+    f1: "inverter_fault",
+    f2: "battery_fault",
+    f3: "meter_timeout",
+  };
+  const ALL_MODULES = ["scene", "tiles", "chart", "stats"];
+  const ALL_TILES = ["pv", "house", "grid", "ccu", "store"];
   const C = { grid: "#e0568a", ccu: "#a98bf0", draw: "#f5a623", pv: "#f5a623", green: "#3ecf5a", blue: "#4a90e2" };
 
   const fmtW = (v) => {
@@ -56,7 +80,9 @@
 
   class MaxxichargeCard extends HTMLElement {
     setConfig(config) {
-      this._config = { title: "Maxxicharge", hours: 3, pv_max: 4000, house_max: 3000, ccu_max: 2300, ...config };
+      this._config = { hours: 3, pv_max: 4000, house_max: 3000, ccu_max: 2300, ...config };
+      if (!Array.isArray(this._config.modules) || !this._config.modules.length) this._config.modules = ALL_MODULES;
+      if (!Array.isArray(this._config.tiles) || !this._config.tiles.length) this._config.tiles = ALL_TILES;
       this._built = false;
       this._hist = null;
       this._histAt = 0;
@@ -78,37 +104,89 @@
       return {};
     }
 
+    static getConfigElement() {
+      return document.createElement("maxxicharge-card-editor");
+    }
+
     disconnectedCallback() {
       this._gone = true;
     }
 
     // ---------- Daten ----------
+    _index() {
+      const reg = this._hass.entities || {};
+      if (this._regRef === reg && this._idx) return this._idx;
+      const byDev = new Map(), byKey = new Map();
+      for (const [id, e] of Object.entries(reg)) {
+        if (e.platform !== "maxxicharge" || !e.translation_key) continue;
+        byDev.set(`${e.device_id}|${e.translation_key}`, id);
+        if (!byKey.has(e.translation_key)) byKey.set(e.translation_key, id);
+      }
+      this._regRef = reg;
+      this._idx = { byDev, byKey };
+      return this._idx;
+    }
+    _mode() {
+      const dev = this._config.device;
+      if (dev && !this._index().byDev.has(`${dev}|total_soc`)) return "ccu";
+      return "total";
+    }
     _entity(key) {
       const override = this._config.entities && this._config.entities[key];
       if (override) return override;
-      const registry = this._hass.entities || {};
-      for (const [id, e] of Object.entries(registry)) {
-        if (e.platform === "maxxicharge" && e.translation_key === KEYS[key]) return id;
-      }
-      return null;
+      const { byDev, byKey } = this._index();
+      if (key === "lock") return byKey.get("write_lock") || null;
+      if (this._mode() === "total") return byKey.get(TOTAL_KEYS[key]) || null;
+      const tk = CCU_KEYS[key];
+      return tk ? byDev.get(`${this._config.device}|${tk}`) || null : null;
     }
-    _state(key) {
+    _raw(key) {
       const id = this._entity(key);
       const st = id && this._hass.states[id];
       return st ? st.state : null;
     }
+    _rawNum(key) {
+      const id = this._entity(key);
+      const st = id && this._hass.states[id];
+      if (!st || st.state === "unknown" || st.state === "unavailable") return null;
+      let n = Number(st.state);
+      if (Number.isNaN(n)) return null;
+      if (key === "pvtoday") {  // Einheit der Entity beachten (CCU: Wh, Gesamt: kWh)
+        const unit = st.attributes && st.attributes.unit_of_measurement;
+        if (unit === "Wh") n /= 1000;
+        else if (unit === "MWh") n *= 1000;
+      }
+      return n;
+    }
+    _state(key) {
+      if (key === "fault" && this._mode() === "ccu") {
+        const on = ["f1", "f2", "f3"].some((k) => this._raw(k) === "on");
+        return this._raw("f1") === null ? null : on ? "on" : "off";
+      }
+      return this._raw(key);
+    }
     _num(key) {
-      const s = this._state(key);
-      if (s === null || s === "unknown" || s === "unavailable") return null;
-      const n = Number(s);
-      return Number.isNaN(n) ? null : n;
+      if (this._mode() === "ccu") {
+        if (key === "autarky") return null;
+        if (key === "house") {  // Verbrauch = Netz + CCU-Abgabe - CCU-Aufnahme (nur mit Zähler an dieser CCU)
+          const grid = this._rawNum("grid");
+          return grid === null ? null : grid + (this._rawNum("feed") || 0) - (this._rawNum("draw") || 0);
+        }
+      }
+      return this._rawNum(key);
+    }
+    _title() {
+      if (this._config.title) return this._config.title;
+      const dev = this._config.device, d = dev && this._hass.devices && this._hass.devices[dev];
+      return d ? d.name_by_user || d.name || "Maxxicharge" : "Maxxicharge";
     }
 
     async _maybeLoadHistory() {
       const now = Date.now();
       if (!this._built || this._loading || now - this._histAt < 120000 || !this._hass.callWS) return;
-      const ids = ["grid", "feed", "draw"].map((k) => this._entity(k));
-      if (ids.some((i) => !i)) return;
+      const idGrid = this._entity("grid"), idFeed = this._entity("feed"), idDraw = this._entity("draw");
+      if (!idFeed && !idDraw) return;
+      const ids = [idGrid, idFeed, idDraw].filter(Boolean);
       this._loading = true;
       try {
         const hours = Number(this._config.hours) || 3;
@@ -123,7 +201,8 @@
           significant_changes_only: false,
         });
         const N = 60, t0 = start.getTime() / 1000, dt = (hours * 3600) / N;
-        const series = ids.map((id) => {
+        const ser = (id) => {
+          if (!id) return null;
           const rows = (res && res[id]) || [];
           const pts = rows
             .map((r) => ({ t: Number(r.lu ?? r.last_updated_ts ?? (r.last_updated ? Date.parse(r.last_updated) / 1000 : NaN)), v: Number(r.s ?? r.state) }))
@@ -136,10 +215,15 @@
             out.push(last);
           }
           return out;
-        });
+        };
+        const g = ser(idGrid), f = ser(idFeed), d = ser(idDraw);
+        const base = f || d;
         this._hist = {
-          grid: series[0],
-          ccu: series[1].map((f, i) => (f === null && series[2][i] === null ? null : (f || 0) - (series[2][i] || 0))),
+          grid: g || [],
+          ccu: base.map((_, i) => {
+            const fv = f ? f[i] : null, dv = d ? d[i] : null;
+            return fv === null && dv === null ? null : (fv || 0) - (dv || 0);
+          }),
         };
         this._histAt = Date.now();
         if (!this._gone) this._drawChart();
@@ -164,6 +248,8 @@
           .badge.lock { background:#d9a21a; }
           .badge.off { background:#555; color:#ddd; }
           .scene { position:relative; margin-top:4px; }
+          .scene.flat { display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:8px; margin-top:10px; }
+          .scene.flat .tile { position:static; width:auto; }
           .scene svg { width:100%; height:auto; display:block; }
           .tile { position:absolute; width:28.5%; min-width:0; overflow:hidden; box-sizing:border-box; background:linear-gradient(160deg,rgba(40,50,55,.92),rgba(20,26,29,.92)); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:7px 10px 8px; backdrop-filter:blur(4px); box-shadow:0 4px 14px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }
           .tile .k { font-size:10.5px; color:#aeb9bd; display:flex; align-items:center; gap:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -196,16 +282,17 @@
         </style>
         <ha-card>
           <div class="top"><div class="title"></div><div class="badges" id="badges"></div></div>
-          <div class="msg" id="msg" hidden>Die Entities der Gesamtübersicht wurden nicht gefunden. Ist der Eintrag „Maxxicharge Gesamt“ eingerichtet?</div>
+          <div class="msg" id="msg" hidden>Keine Maxxicharge-Werte gefunden. Wähle im Karten-Editor ein Gerät aus oder richte „Maxxicharge Gesamt“ ein.</div>
           <div id="main">
-            <div class="scene">
+            <div class="scene" id="scene">
               ${this._houseSvg()}
-              <div class="tile t-pv"><div class="k"><span class="ic">☀️</span>PV-Leistung</div><div class="v" id="v-pv">–</div><div class="bar"><i id="b-pv" style="background:linear-gradient(90deg,#f5a623,#ff7a18);color:#ff9a2e"></i></div></div>
-              <div class="tile t-house"><div class="k"><span class="ic">🏠</span>Verbrauch</div><div class="v" id="v-house">–</div><div class="bar"><i id="b-house" style="background:${C.green};color:${C.green}"></i></div></div>
-              <div class="tile t-grid"><div class="k"><span class="ic">⚡</span>Netz</div><div class="v" id="v-grid">–</div><div class="ts" id="s-grid"></div><div class="bar"><i id="b-grid" style="background:${C.blue};color:${C.blue}"></i></div></div>
-              <div class="tile t-ccu"><div class="k"><span class="ic">🔌</span>CCU-Abgabe</div><div class="v" id="v-ccu">–</div><div class="bar"><i id="b-ccu" style="background:${C.ccu};color:${C.ccu}"></i></div></div>
-              <div class="tile t-store"><div class="k"><span class="ic">🔋</span>Speicher</div><div class="v" id="v-soc">–</div><div class="ts" id="s-state"></div><div class="bar"><i id="b-soc" style="background:${C.green};color:${C.green}"></i></div></div>
+              <div class="tile t-pv" data-tile="pv"><div class="k"><span class="ic">☀️</span>PV-Leistung</div><div class="v" id="v-pv">–</div><div class="bar"><i id="b-pv" style="background:linear-gradient(90deg,#f5a623,#ff7a18);color:#ff9a2e"></i></div></div>
+              <div class="tile t-house" data-tile="house"><div class="k"><span class="ic">🏠</span>Verbrauch</div><div class="v" id="v-house">–</div><div class="bar"><i id="b-house" style="background:${C.green};color:${C.green}"></i></div></div>
+              <div class="tile t-grid" data-tile="grid"><div class="k"><span class="ic">⚡</span>Netz</div><div class="v" id="v-grid">–</div><div class="ts" id="s-grid"></div><div class="bar"><i id="b-grid" style="background:${C.blue};color:${C.blue}"></i></div></div>
+              <div class="tile t-ccu" data-tile="ccu"><div class="k"><span class="ic">🔌</span>CCU-Abgabe</div><div class="v" id="v-ccu">–</div><div class="bar"><i id="b-ccu" style="background:${C.ccu};color:${C.ccu}"></i></div></div>
+              <div class="tile t-store" data-tile="store"><div class="k"><span class="ic">🔋</span>Speicher</div><div class="v" id="v-soc">–</div><div class="ts" id="s-state"></div><div class="bar"><i id="b-soc" style="background:${C.green};color:${C.green}"></i></div></div>
             </div>
+            <div id="m-chart">
             <div class="sect">⚡ Haushalt</div>
             ${this._chartSvg()}
             <div class="legend">
@@ -213,11 +300,29 @@
               <div class="nums"><div class="num"><div class="n" id="n-grid" style="color:${C.grid}">–</div><div class="cap" id="c-grid">Netzbezug</div></div><div class="num"><div class="n" id="n-ccu" style="color:${C.ccu}">–</div><div class="cap" id="c-ccu">CCU-Abgabe</div></div></div>
               <div class="col r"><span>CCU-Abgabe<span class="dot" style="background:${C.ccu}"></span></span><span>CCU-Aufnahme<span class="dot" style="background:${C.draw}"></span></span></div>
             </div>
+            </div>
             <div class="foot" id="foot"></div>
           </div>
         </ha-card>`;
-      this.shadowRoot.querySelector(".title").textContent = this._config.title;
       this._built = true;
+      this._applyLayout();
+    }
+
+    _applyLayout() {
+      const $ = (id) => this.shadowRoot.getElementById(id);
+      const mods = new Set(this._config.modules), tiles = new Set(this._config.tiles);
+      const art = mods.has("scene"), showTiles = mods.has("tiles");
+      $("scene").style.display = art || showTiles ? "" : "none";
+      $("scene").classList.toggle("flat", !art);
+      $("house").style.display = art ? "" : "none";
+      this.shadowRoot.querySelectorAll("[data-tile]").forEach((el) => {
+        el.style.display = showTiles && tiles.has(el.dataset.tile) ? "" : "none";
+      });
+      this.shadowRoot.querySelectorAll("[data-t]").forEach((el) => {
+        el.style.display = showTiles && tiles.has(el.dataset.t) ? "" : "none";
+      });
+      $("m-chart").style.display = mods.has("chart") ? "" : "none";
+      $("foot").style.display = mods.has("stats") ? "" : "none";
     }
 
     _houseSvg() {
@@ -300,10 +405,11 @@
             <circle id="led1" cx="354" cy="168" r="2.4" fill="#888"/><circle id="led2" cx="376" cy="168" r="2.4" fill="#888"/>
           </g>
           <!-- Leitlinien von den Kacheln zu den Teilen des Hauses -->
-          <g stroke="rgba(255,255,255,.32)" stroke-width="1" stroke-dasharray="2 3" fill="none">
-            <path d="M116 56 L152 76"/><path d="M324 58 L316 80"/><path d="M57 254 L57 210"/><path d="M200 254 L214 210"/><path d="M366 254 L366 208"/>
-          </g>
-          <g fill="rgba(255,255,255,.7)"><circle cx="152" cy="76" r="2"/><circle cx="316" cy="80" r="2"/><circle cx="57" cy="210" r="2"/><circle cx="214" cy="210" r="2"/><circle cx="366" cy="208" r="2"/></g>
+          <g data-t="pv"><path d="M116 56 L152 76" stroke="rgba(255,255,255,.32)" stroke-width="1" stroke-dasharray="2 3" fill="none"/><circle cx="152" cy="76" r="2" fill="rgba(255,255,255,.7)"/></g>
+          <g data-t="house"><path d="M324 58 L316 80" stroke="rgba(255,255,255,.32)" stroke-width="1" stroke-dasharray="2 3" fill="none"/><circle cx="316" cy="80" r="2" fill="rgba(255,255,255,.7)"/></g>
+          <g data-t="grid"><path d="M57 254 L57 210" stroke="rgba(255,255,255,.32)" stroke-width="1" stroke-dasharray="2 3" fill="none"/><circle cx="57" cy="210" r="2" fill="rgba(255,255,255,.7)"/></g>
+          <g data-t="ccu"><path d="M200 254 L214 210" stroke="rgba(255,255,255,.32)" stroke-width="1" stroke-dasharray="2 3" fill="none"/><circle cx="214" cy="210" r="2" fill="rgba(255,255,255,.7)"/></g>
+          <g data-t="store"><path d="M366 254 L366 208" stroke="rgba(255,255,255,.32)" stroke-width="1" stroke-dasharray="2 3" fill="none"/><circle cx="366" cy="208" r="2" fill="rgba(255,255,255,.7)"/></g>
           <!-- Leitungen -->
           <path id="p-pv" d="M322 72 L362 72 L362 150" fill="none" stroke="#51606a" stroke-width="2" opacity=".45"/>
           <path id="p-bat" d="M346 198 L330 198 L330 208 L214 208 L214 198" fill="none" stroke="#51606a" stroke-width="2" opacity=".45"/>
@@ -346,6 +452,7 @@
       const $ = (id) => this.shadowRoot.getElementById(id);
       const pv = this._num("pv"), grid = this._num("grid"), house = this._num("house"), soc = this._num("soc");
       const ch = this._num("charge"), dis = this._num("discharge"), feed = this._num("feed"), draw = this._num("draw");
+      this.shadowRoot.querySelector(".title").textContent = this._title();
       const ok = [pv, grid, house, soc].some((v) => v !== null);
       $("msg").hidden = ok;
       $("main").style.display = ok ? "" : "none";
@@ -408,7 +515,7 @@
       const none = $("t-none");
       if (!this._hist) { none.textContent = this._hass && this._hass.callWS ? "Verlauf wird geladen …" : ""; return; }
       none.textContent = "";
-      const L = 46, R = 354, T = 8, B = 104, W = R - L, N = this._hist.grid.length - 1;
+      const L = 46, R = 354, T = 8, B = 104, W = R - L, N = Math.max(this._hist.grid.length, this._hist.ccu.length) - 1;
       const gv = this._hist.grid.filter((v) => v !== null), cv = this._hist.ccu.filter((v) => v !== null);
       if (!gv.length && !cv.length) { none.textContent = "Keine Verlaufsdaten"; return; }
       const rg = niceRange(gv.length ? gv : [0]), rc = niceRange(cv.length ? cv : [0]);
@@ -443,11 +550,106 @@
     }
   }
 
+  // ---------- Karten-Editor (Gerät und Bausteine auswählen) ----------
+  const LABELS = {
+    title: "Titel (leer = Gerätename)",
+    device: "Gerät (leer = Maxxicharge Gesamt)",
+    modules: "Bausteine",
+    tiles: "Kacheln",
+    hours: "Verlauf in Stunden",
+    pv_max: "PV-Balken Maximum (W)",
+    house_max: "Verbrauchs-Balken Maximum (W)",
+    ccu_max: "CCU-Balken Maximum (W)",
+  };
+  const SCHEMA = [
+    { name: "device", selector: { device: { filter: [{ integration: "maxxicharge" }] } } },
+    { name: "title", selector: { text: {} } },
+    {
+      name: "modules",
+      selector: {
+        select: {
+          multiple: true,
+          mode: "list",
+          options: [
+            { value: "scene", label: "Haus-Grafik" },
+            { value: "tiles", label: "Kacheln" },
+            { value: "chart", label: "Verlauf „Haushalt“" },
+            { value: "stats", label: "Kennzahlen" },
+          ],
+        },
+      },
+    },
+    {
+      name: "tiles",
+      selector: {
+        select: {
+          multiple: true,
+          mode: "list",
+          options: [
+            { value: "pv", label: "PV-Leistung" },
+            { value: "house", label: "Verbrauch" },
+            { value: "grid", label: "Netz" },
+            { value: "ccu", label: "CCU-Abgabe" },
+            { value: "store", label: "Speicher" },
+          ],
+        },
+      },
+    },
+    { name: "hours", selector: { number: { min: 1, max: 24, mode: "box" } } },
+    {
+      type: "grid",
+      name: "",
+      schema: [
+        { name: "pv_max", selector: { number: { min: 500, max: 20000, step: 100, mode: "box" } } },
+        { name: "house_max", selector: { number: { min: 500, max: 20000, step: 100, mode: "box" } } },
+        { name: "ccu_max", selector: { number: { min: 500, max: 5000, step: 100, mode: "box" } } },
+      ],
+    },
+  ];
+
+  class MaxxichargeCardEditor extends HTMLElement {
+    setConfig(config) {
+      this._config = config;
+      this._draw();
+    }
+
+    set hass(hass) {
+      this._hass = hass;
+      if (this._form) this._form.hass = hass;
+    }
+
+    _draw() {
+      if (!this._form) {
+        this._form = document.createElement("ha-form");
+        this._form.computeLabel = (item) => LABELS[item.name] || item.name;
+        this._form.addEventListener("value-changed", (ev) => {
+          ev.stopPropagation();
+          const value = { ...ev.detail.value, type: "custom:maxxicharge-card" };
+          Object.keys(value).forEach((k) => (value[k] === "" || value[k] === undefined) && delete value[k]);
+          this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: value }, bubbles: true, composed: true }));
+        });
+        this.appendChild(this._form);
+      }
+      this._form.hass = this._hass;
+      this._form.schema = SCHEMA;
+      this._form.data = {
+        modules: ALL_MODULES,
+        tiles: ALL_TILES,
+        hours: 3,
+        pv_max: 4000,
+        house_max: 3000,
+        ccu_max: 2300,
+        ...this._config,
+      };
+    }
+  }
+
   if (!customElements.get("maxxicharge-card")) customElements.define("maxxicharge-card", MaxxichargeCard);
+  if (!customElements.get("maxxicharge-card-editor")) customElements.define("maxxicharge-card-editor", MaxxichargeCardEditor);
   window.customCards = window.customCards || [];
   window.customCards.push({
     type: "maxxicharge-card",
     name: "Maxxicharge",
-    description: "Haus mit PV und Speicher, Kacheln und Verlauf – im Stil der Maxxisun-App (Gesamtübersicht).",
+    description: "Haus mit PV und Speicher, Kacheln und Verlauf im Stil der Maxxisun-App, für die Gesamtübersicht oder eine einzelne CCU, modular einstellbar.",
   });
 })();
