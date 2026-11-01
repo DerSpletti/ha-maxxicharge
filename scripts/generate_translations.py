@@ -16,6 +16,8 @@ spec.loader.exec_module(const)
 
 TEXT = {
     "de": {
+        "wl_title": "Willkommen bei Maxxicharge",
+        "wl_desc": "Diese Einrichtung verbindet deine Maxxisun-CCU(s) per MQTT mit Home Assistant und räumt die Werte auf.\n\n**Das brauchst du gleich:**\n- **IP-Adresse von Home Assistant:** `{ha_ip}`. Das ist die „Broker-Adresse“, die du an der CCU einträgst.\n- **Port:** meist `1883`.\n- **Benutzer und Passwort für MQTT:** Hast du schon MQTT (z. B. Mosquitto), nimm dessen Zugangsdaten, am besten von einem eigenen Benutzer nur für MQTT. Sonst legst du sie im nächsten Schritt für den eingebauten Broker selbst fest.\n- **Die Maxxisun-App** (Bereich „Smart Home Integration“) oder einen Browser im Heimnetz.\n- **CCU-Firmware** 2.42.103 oder neuer zum Lesen, 2.43 oder neuer zum Ändern von Einstellungen.\n\nDie IP-Adresse der CCU brauchst du nicht, die CCUs werden automatisch gefunden. Hast du schon MQTT in Home Assistant, nutze ich es. Sonst biete ich einen eingebauten Broker an, nichts muss installiert werden.",
         "user_title": "Maxxicharge einrichten",
         "user_desc": "**So verbindest du die CCU mit MQTT (einmalig):**\n\n1. Öffne in der Maxxisun-App den Bereich **Smart Home Integration** (oder im Browser `http://IP-DER-CCU/integrations/mqtt`; die Seite hat keinen Login, nur im Heimnetz verwenden).\n2. „MQTT-Verbindung“ einschalten. Broker-Adresse: `{broker}`, Port: `{port}`.\n3. „Anmeldung“ einschalten und Benutzer und Passwort eines Home-Assistant-Benutzers eintragen (am besten ein eigener Benutzer nur für MQTT).\n4. Speichern.\n\nVoraussetzung: Firmware **2.42.103 oder neuer** (Lesen), **2.43 oder neuer** zum Ändern von Einstellungen. Ist die CCU schon verbunden, klicke einfach auf „Absenden“. Die Suche dauert bis zu 10 Sekunden.",
         "prefix": "Discovery-Präfix",
@@ -73,6 +75,8 @@ TEXT = {
         "e_opt": "Ungültige Auswahl: {option}",
     },
     "en": {
+        "wl_title": "Welcome to Maxxicharge",
+        "wl_desc": "This setup connects your Maxxisun CCU(s) to Home Assistant via MQTT and tidies up the values.\n\n**You will need:**\n- **IP address of Home Assistant:** `{ha_ip}`. This is the “broker address” you enter at the CCU.\n- **Port:** usually `1883`.\n- **User and password for MQTT:** if you already have MQTT (e.g. Mosquitto) use its credentials, ideally from a dedicated MQTT-only user. Otherwise you choose them yourself in the next step for the built-in broker.\n- **The Maxxisun app** (“Smart Home Integration”) or a browser in your home network.\n- **CCU firmware** 2.42.103 or newer for reading, 2.43 or newer to change settings.\n\nYou do not need the CCU’s IP address, CCUs are found automatically. If Home Assistant already has MQTT I use it. Otherwise I offer a built-in broker, nothing has to be installed.",
         "user_title": "Set up Maxxicharge",
         "user_desc": "**How to connect the CCU to MQTT (one time):**\n\n1. In the Maxxisun app open **Smart Home Integration** (or `http://CCU-IP/integrations/mqtt` in a browser; the page has no login, use it only in your home network).\n2. Switch “MQTT connection” on. Broker address: `{broker}`, port: `{port}`.\n3. Switch “Login” on and enter user and password of a Home Assistant user (ideally a dedicated MQTT-only user).\n4. Save.\n\nRequires firmware **2.42.103 or newer** (reading) and **2.43 or newer** to change settings. If the CCU is already connected just click “Submit”. The search takes up to 10 seconds.",
         "prefix": "Discovery prefix",
@@ -140,7 +144,8 @@ def build(lang: str) -> dict:
     return {
         "config": {
             "step": {
-                "user": {
+                "user": {"title": t["wl_title"], "description": t["wl_desc"]},
+                "connect": {
                     "title": t["user_title"],
                     "description": t["user_desc"],
                     "data": {"discovery_prefix": t["prefix"]},

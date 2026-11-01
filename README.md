@@ -57,6 +57,13 @@ Praxisbericht, es gibt keine offizielle Maxxisun-Doku dazu; die Feldnamen stimme
 4. Optional: Eintrag → Konfigurieren → **Alte Autodiscovery-Entities deaktivieren**. Danach zeigen Dashboards
    und Automationen auf die neuen Entities (die Entity-IDs ändern sich, siehe unten).
 
+## Updates
+Updates meldet **HACS**: Sobald im Repo ein neues Release (Tag `vX.Y.Z`, gleich der `version` in
+`manifest.json`) erscheint, zeigt Home Assistant unter Einstellungen → Updates (und in HACS) ein Update
+für *Maxxicharge* an. Installieren, danach Home Assistant neu starten. Wer es automatisch will, kann eine
+Automation mit der Aktion `update.install` auf die Entity `update.maxxicharge_update` bauen (Neustart
+bleibt nötig). Die Entity-ID kann bei dir abweichen, sie steht in HACS bzw. unter Einstellungen → Updates.
+
 ## Bekannte Einschränkungen
 - **Schreiben nur ab Firmware 2.43.** Mit älterer Firmware (z. B. 2.42.103) lehnt die CCU alle Änderungen ab.
   Die Integration verweigert das dann mit Fehlermeldung, schreibt eine Warnung ins Log und legt einen Hinweis

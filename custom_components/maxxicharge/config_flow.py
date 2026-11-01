@@ -198,6 +198,16 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
 
     # ---------- Einstieg ----------
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Willkommensseite: was man für die Einrichtung braucht (IP, Port, Benutzer, Passwort)."""
+        if user_input is not None:
+            return await self.async_step_connect()
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema({}),
+            description_placeholders={"ha_ip": await _host_ip(self.hass)},
+        )
+
+    async def async_step_connect(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if await _mqtt_ready(self.hass):
             self._mode = MODE_HA
             self._ph = await _ha_broker_info(self.hass)
@@ -205,7 +215,7 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._prefix = user_input[CONF_PREFIX].strip().strip("/") or DEFAULT_PREFIX
                 return await self._scan()
             return self.async_show_form(
-                step_id="user",
+                step_id="connect",
                 data_schema=vol.Schema({vol.Required(CONF_PREFIX, default=DEFAULT_PREFIX): str}),
                 description_placeholders=self._ph,
             )
@@ -220,7 +230,7 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_mqtt_missing(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Nutzer will ein eigenes MQTT: erklären, dann erneut prüfen."""
         if user_input is not None:
-            return await self.async_step_user()
+            return await self.async_step_connect()
         return self.async_show_form(step_id="mqtt_missing", data_schema=vol.Schema({}))
 
     # ---------- Eingebauter Broker ----------
