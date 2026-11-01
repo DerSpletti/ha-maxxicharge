@@ -1,0 +1,358 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Maxxicharge",
+        "description": "Looks for CCUs that announced themselves on the broker via MQTT autodiscovery. The MQTT integration must be set up.",
+        "data": {
+          "discovery_prefix": "Discovery prefix"
+        },
+        "data_description": {
+          "discovery_prefix": "Default is “homeassistant”. Change only if your CCU uses another prefix."
+        }
+      },
+      "select": {
+        "title": "Select CCUs",
+        "description": "CCUs found. Each CCU gets its own entry with tidy entities.",
+        "data": {
+          "ccus": "CCUs"
+        }
+      },
+      "manual": {
+        "title": "Enter CCU manually",
+        "description": "No new CCU was found. Enter the CCU ID (format CCU2-XXXX-XXXX-XXXX). The CCU must have published its discovery config on the broker.",
+        "data": {
+          "ccu_id": "CCU ID",
+          "ip": "CCU IP address (optional)"
+        },
+        "data_description": {
+          "ip": "Used for the local endpoint http://<IP>/api/live and the device link."
+        }
+      }
+    },
+    "error": {
+      "invalid_ccu_id": "Invalid CCU ID. Expected: CCU2-XXXX-XXXX-XXXX.",
+      "cannot_connect": "No CCU answers at this IP (/api/live unreachable).",
+      "not_found": "No discovery config for this CCU found on the broker.",
+      "none_selected": "Please select at least one CCU."
+    },
+    "abort": {
+      "mqtt_not_ready": "The MQTT integration is not set up or not connected.",
+      "already_configured": "All CCUs found are already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Maxxicharge options",
+        "data": {
+          "ip": "CCU IP address (optional)",
+          "cleanup": "Old autodiscovery entities"
+        },
+        "data_description": {
+          "ip": "Used for the local endpoint http://<IP>/api/live and the device link.",
+          "cleanup": "Disables the duplicate entities from the CCU autodiscovery (nothing is deleted) or re-enables them."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No CCU answers at this IP (/api/live unreachable)."
+    }
+  },
+  "selector": {
+    "cleanup": {
+      "options": {
+        "none": "Change nothing",
+        "disable": "Disable old entities",
+        "enable": "Re-enable old entities"
+      }
+    }
+  },
+  "entity": {
+    "number": {
+      "max_output": {
+        "name": "Maximum output"
+      },
+      "max_charge_power": {
+        "name": "Maximum charging power"
+      },
+      "min_soc": {
+        "name": "Minimum charge level"
+      },
+      "max_soc": {
+        "name": "Maximum charge level"
+      },
+      "meter_loss_output": {
+        "name": "Output on meter loss"
+      }
+    },
+    "select": {
+      "charging_strategy": {
+        "name": "Charging strategy"
+      }
+    },
+    "switch": {
+      "ups_mode": {
+        "name": "UPS mode"
+      }
+    },
+    "sensor": {
+      "soc": {
+        "name": "State of charge"
+      },
+      "battery_charge_power": {
+        "name": "Battery charging power"
+      },
+      "battery_discharge_power": {
+        "name": "Battery discharging power"
+      },
+      "ac_power": {
+        "name": "CCU AC power"
+      },
+      "grid_power": {
+        "name": "Grid power"
+      },
+      "pv_power": {
+        "name": "PV power"
+      },
+      "operating_mode": {
+        "name": "Operating mode"
+      },
+      "ac_out_today": {
+        "name": "Output today"
+      },
+      "ac_out_total": {
+        "name": "Output total"
+      },
+      "ac_in_today": {
+        "name": "Input today"
+      },
+      "ac_in_total": {
+        "name": "Input total"
+      },
+      "grid_export_today": {
+        "name": "Grid export today"
+      },
+      "grid_export_total": {
+        "name": "Grid export total"
+      },
+      "grid_import_today": {
+        "name": "Grid import today"
+      },
+      "grid_import_total": {
+        "name": "Grid import total"
+      },
+      "pv_energy_today": {
+        "name": "PV energy today"
+      },
+      "pv_energy_total": {
+        "name": "PV energy total"
+      },
+      "battery_charged": {
+        "name": "Battery charged"
+      },
+      "battery_discharged": {
+        "name": "Battery discharged"
+      },
+      "firmware": {
+        "name": "Firmware"
+      },
+      "ccu_ip": {
+        "name": "IP address"
+      },
+      "temperature": {
+        "name": "Temperature"
+      },
+      "uptime": {
+        "name": "Uptime"
+      },
+      "licence": {
+        "name": "Licence"
+      },
+      "eff_output_limit": {
+        "name": "Effective output limit"
+      },
+      "eff_input_limit": {
+        "name": "Effective input limit"
+      },
+      "usable_capacity": {
+        "name": "Usable capacity"
+      },
+      "design_capacity": {
+        "name": "Design capacity"
+      },
+      "battery_count": {
+        "name": "Battery count"
+      },
+      "usable_energy_raw": {
+        "name": "Usable energy remaining (raw)"
+      },
+      "ccu_id_raw": {
+        "name": "CCU ID"
+      },
+      "api_ver": {
+        "name": "API version"
+      },
+      "inv_variant": {
+        "name": "Inverter variant"
+      },
+      "inv_dc": {
+        "name": "Inverter DC"
+      },
+      "inv_ac": {
+        "name": "Inverter AC"
+      },
+      "ccu_pub_time": {
+        "name": "CCU publication time"
+      },
+      "ccu_power_age": {
+        "name": "CCU power age"
+      },
+      "backup_outlet_power": {
+        "name": "Backup outlet power"
+      },
+      "cont_input_limit": {
+        "name": "Continuous input limit"
+      },
+      "multiuse_power": {
+        "name": "Multiuse system power"
+      },
+      "multiuse_soc": {
+        "name": "Multiuse system SOC"
+      },
+      "multiuse_soc_age": {
+        "name": "Multiuse SOC age"
+      },
+      "status_bits_0": {
+        "name": "Status bits 0"
+      },
+      "status_bits_1": {
+        "name": "Status bits 1"
+      },
+      "grid_pub_time": {
+        "name": "Grid publication time"
+      },
+      "grid_power_age": {
+        "name": "Grid power age"
+      },
+      "battery_pub_time": {
+        "name": "Battery publication time"
+      },
+      "conv_in_total": {
+        "name": "Converter input total"
+      },
+      "conv_out_total": {
+        "name": "Converter output total"
+      },
+      "soc_age": {
+        "name": "SOC age"
+      },
+      "conv1_in": {
+        "name": "Converter 1 input"
+      },
+      "conv1_out": {
+        "name": "Converter 1 output"
+      },
+      "bat1_soc": {
+        "name": "Battery 1 SOC"
+      },
+      "bat1_voltage": {
+        "name": "Battery 1 voltage"
+      },
+      "bat1_pv_total": {
+        "name": "Battery 1 PV energy total"
+      },
+      "bat1_pv_today": {
+        "name": "Battery 1 PV energy today"
+      },
+      "bat1_pv_power": {
+        "name": "Battery 1 PV power"
+      },
+      "bat1_dc_power": {
+        "name": "Battery 1 DC power"
+      },
+      "bat1_stored": {
+        "name": "Battery 1 stored energy"
+      },
+      "bat1_usable_cap": {
+        "name": "Battery 1 usable capacity"
+      },
+      "bat1_design_cap": {
+        "name": "Battery 1 design capacity"
+      },
+      "ac_feed_power": {
+        "name": "Feed-in to house"
+      },
+      "ac_draw_power": {
+        "name": "AC draw (charging)"
+      },
+      "usable_energy_kwh": {
+        "name": "Usable energy remaining"
+      },
+      "grid_balance": {
+        "name": "Grid balance total"
+      },
+      "battery_balance": {
+        "name": "Battery balance total"
+      },
+      "last_update": {
+        "name": "Last update"
+      }
+    },
+    "binary_sensor": {
+      "inverter_fault": {
+        "name": "Inverter fault"
+      },
+      "battery_fault": {
+        "name": "Battery fault"
+      },
+      "meter_timeout": {
+        "name": "Meter timeout"
+      },
+      "full": {
+        "name": "Battery full"
+      },
+      "empty": {
+        "name": "Battery empty"
+      },
+      "online": {
+        "name": "Connected"
+      },
+      "write_possible": {
+        "name": "Writing possible"
+      }
+    }
+  },
+  "issues": {
+    "firmware_too_old": {
+      "title": "CCU firmware too old for writing",
+      "description": "CCU {ccu} runs firmware {version}. Settings can only be changed via MQTT from firmware 2.43. Reading still works."
+    }
+  },
+  "exceptions": {
+    "mqtt_not_ready": {
+      "message": "The MQTT integration is not ready."
+    },
+    "ccu_not_found": {
+      "message": "CCU {ccu} has no discovery config on the broker (offline?)."
+    },
+    "no_command_topic": {
+      "message": "“{name}” is not writable (no command topic)."
+    },
+    "firmware_too_old_write": {
+      "message": "Writing not possible: firmware {version} is older than 2.43."
+    },
+    "ccu_offline": {
+      "message": "The CCU is unreachable. “{name}” was not changed."
+    },
+    "publish_failed": {
+      "message": "Sending to the MQTT broker failed (“{name}” = {value})."
+    },
+    "write_failed": {
+      "message": "The CCU did not accept “{name}” = {value} (current value: {current}). The value was probably rejected."
+    },
+    "invalid_option": {
+      "message": "Invalid selection: {option}"
+    }
+  }
+}

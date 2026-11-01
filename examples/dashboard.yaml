@@ -1,0 +1,51 @@
+# Beispiel-Dashboard für eine CCU. Entity-IDs an dein Gerät anpassen:
+# Gerät heißt "CCU <letzte 4 Zeichen der ID>", Entity-ID = <domain>.ccu_<xxxx>_<name>.
+# (Prüfen unter Einstellungen → Geräte & Dienste → Maxxicharge → Entities.)
+type: vertical-stack
+cards:
+  - type: gauge
+    entity: sensor.ccu_06e8_ladestand
+    name: Ladestand
+    min: 0
+    max: 100
+    severity:
+      red: 0
+      yellow: 20
+      green: 40
+  - type: entities
+    title: Batterie
+    entities:
+      - entity: sensor.ccu_06e8_nutzbare_restenergie
+      - entity: sensor.ccu_06e8_batterie_ladeleistung
+      - entity: sensor.ccu_06e8_batterie_entladeleistung
+      - entity: binary_sensor.ccu_06e8_speicher_voll
+      - entity: binary_sensor.ccu_06e8_speicher_leer
+  - type: entities
+    title: Netz und Haus
+    entities:
+      - entity: sensor.ccu_06e8_netzleistung
+      - entity: sensor.ccu_06e8_einspeisung_ins_haus
+      - entity: sensor.ccu_06e8_ac_aufnahme_laden
+      - entity: sensor.ccu_06e8_netzbilanz_gesamt
+      - entity: sensor.ccu_06e8_batteriebilanz_gesamt
+  - type: entities
+    title: Einstellungen
+    footer:
+      type: markdown
+      content: >-
+        Änderungen werden von der CCU bestätigt. Bei Ablehnung erscheint eine Fehlermeldung.
+        Schreiben geht erst ab Firmware 2.43.
+    entities:
+      - entity: number.ccu_06e8_max_ausgangsleistung
+      - entity: number.ccu_06e8_max_ladeleistung
+      - entity: number.ccu_06e8_mindest_ladestand
+      - entity: number.ccu_06e8_maximaler_ladestand
+      - entity: select.ccu_06e8_ladestrategie
+      - entity: switch.ccu_06e8_usv_modus
+  - type: entities
+    title: Diagnose
+    entities:
+      - entity: binary_sensor.ccu_06e8_verbunden
+      - entity: sensor.ccu_06e8_letztes_update
+      - entity: sensor.ccu_06e8_firmware
+      - entity: binary_sensor.ccu_06e8_schreiben_moglich
