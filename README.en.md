@@ -24,6 +24,12 @@ with proper names, under one device per CCU.
   mode. The integration sends the value, waits up to 10 seconds for the CCU to confirm and otherwise raises an
   **error in the UI**. The entity always shows the CCU’s real value.
 - **Derived values:** battery full/empty, usable energy in kWh, feed-in to house, AC draw, grid and battery balance.
+- **Total overview:** a device **“Maxxicharge Gesamt”** calculates across all CCUs: state of charge (capacity
+  weighted), usable energy, charge/discharge power, PV, grid, **house consumption**, **self-sufficiency**,
+  **self-consumption**, remaining runtime and time to full. Per CCU there are round-trip efficiency and charge cycles.
+- **Write protection:** a switch on the “Maxxicharge Gesamt” device blocks all changes to the CCUs.
+- **Own dashboard card** in the style of the Maxxisun app (house with PV and storage, tiles, “household” history),
+  no extra cards needed. See [Dashboard card](#dashboard-card).
 - **Diagnostics:** “Connected”, “Last update”, firmware, “Writing possible”, a *Repairs* notice for firmware
   below 2.43, diagnostics download with redacted credentials.
 - **No dependencies:** no extra packages, no cloud account, everything local.
@@ -72,11 +78,30 @@ user and password apply.
 | Main values | State of charge, usable energy, battery charge/discharge power, CCU AC power, grid power, PV power, operating mode, battery full/empty |
 | Energy | Output/input today and total, grid import/export, PV yield, battery charged/discharged, grid and battery balance |
 | Configuration | Max. output power, max. charge power, min/max charge level, output on meter loss, charging strategy, UPS mode |
+| Calculated per CCU | Round-trip efficiency, charge cycles, remaining runtime, time to full |
+| Total overview | State of charge total, house consumption, self-sufficiency, self-consumption, PV total, grid power, write protection |
 | Diagnostics | Connected, last update, firmware, IP address, temperature, uptime, fault flags, writing possible |
 
 Sign convention of the CCU: positive = battery discharging / CCU feeding the house / grid import, negative = the
 opposite. The energy counters are **estimates** stored by the CCU roughly every 5 minutes, not for billing.
+House consumption, self-sufficiency and self-consumption are **approximations** from meter and CCU values. The total
+overview assumes that all CCUs share the same meter.
 An example dashboard is in [`examples/dashboard.yaml`](examples/dashboard.yaml).
+
+## Dashboard card
+After setup the card **Maxxicharge** appears in the card picker (reload the browser cache once if it is missing).
+Via YAML:
+```yaml
+type: custom:maxxicharge-card
+title: Maxxicharge        # optional
+hours: 3                  # history range in hours
+pv_max: 4000              # bar scales in W (optional)
+house_max: 3000
+ccu_max: 2300
+```
+The card finds the entities of the total overview automatically. You can override single ones:
+`entities: { pv: sensor.my_pv, grid: sensor.my_grid }`. Keys: `pv`, `charge`, `discharge`, `grid`, `house`, `soc`,
+`feed`, `draw`, `runtime`, `ttf`, `autarky`, `usable`, `pvtoday`, `temp`, `fault`, `lock`, `online`.
 
 ## Changing settings: what “confirmed” means
 The integration sends the value and waits until the CCU reports it back. That means *stored*, not *power changed

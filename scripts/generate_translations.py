@@ -29,6 +29,9 @@ TEXT = {
         "flow_title": "Maxxicharge {name}",
         "is_cr_title": "CCU wird vom Broker abgelehnt",
         "is_cr_desc": "Die CCU `{client}` kann sich nicht am Broker anmelden (Grund: {reason}). Prüfe in der Maxxisun-App unter Smart Home Integration Benutzer und Passwort. Die Daten findest du unter Einstellungen → Geräte & Dienste → Maxxicharge → Konfigurieren → Verbindungsdaten. Der Hinweis verschwindet, sobald sich die CCU anmelden kann.",
+        "e_lock": "Schreibschutz ist eingeschaltet. „{name}“ wurde nicht geändert. Schalte den Schreibschutz im Gerät „Maxxicharge Gesamt“ aus.",
+        "ot_title": "Maxxicharge Gesamt",
+        "ot_desc": "Die Gesamtübersicht rechnet über alle CCUs. Hier gibt es nichts einzustellen. Der **Schreibschutz** sperrt alle Änderungen an den CCUs und sitzt als Schalter im Gerät „Maxxicharge Gesamt“.",
         "wl_title": "Willkommen bei Maxxicharge",
         "wl_desc": "Diese Einrichtung verbindet deine Maxxisun-CCU(s) per MQTT mit Home Assistant und räumt die Werte auf.\n\n**Das brauchst du gleich:**\n- **IP-Adresse von Home Assistant:** `{ha_ip}`. Das ist die „Broker-Adresse“, die du an der CCU einträgst.\n- **Port:** meist `1883`.\n- **Benutzer und Passwort für MQTT:** Hast du schon MQTT (z. B. Mosquitto), nimm dessen Zugangsdaten, am besten von einem eigenen Benutzer nur für MQTT. Sonst legst du sie im nächsten Schritt für den eingebauten Broker selbst fest.\n- **Die Maxxisun-App** (Bereich „Smart Home Integration“) oder einen Browser im Heimnetz.\n- **CCU-Firmware** 2.42.103 oder neuer zum Lesen, 2.43 oder neuer zum Ändern von Einstellungen.\n\nDie IP-Adresse der CCU brauchst du nicht, die CCUs werden automatisch gefunden. Hast du schon MQTT in Home Assistant, nutze ich es. Sonst biete ich einen eingebauten Broker an, nichts muss installiert werden.",
         "user_title": "Maxxicharge einrichten",
@@ -101,6 +104,9 @@ TEXT = {
         "flow_title": "Maxxicharge {name}",
         "is_cr_title": "CCU rejected by the broker",
         "is_cr_desc": "The CCU `{client}` cannot log in to the broker (reason: {reason}). Check user and password in the Maxxisun app under Smart Home Integration. The details are under Settings → Devices & services → Maxxicharge → Configure → Connection details. This notice disappears as soon as the CCU can log in.",
+        "e_lock": "Write protection is on. “{name}” was not changed. Turn write protection off in the device “Maxxicharge Gesamt”.",
+        "ot_title": "Maxxicharge Total",
+        "ot_desc": "The total overview calculates across all CCUs. There is nothing to configure here. **Write protection** blocks all changes to the CCUs and is a switch on the device “Maxxicharge Gesamt”.",
         "wl_title": "Welcome to Maxxicharge",
         "wl_desc": "This setup connects your Maxxisun CCU(s) to Home Assistant via MQTT and tidies up the values.\n\n**You will need:**\n- **IP address of Home Assistant:** `{ha_ip}`. This is the “broker address” you enter at the CCU.\n- **Port:** usually `1883`.\n- **User and password for MQTT:** if you already have MQTT (e.g. Mosquitto) use its credentials, ideally from a dedicated MQTT-only user. Otherwise you choose them yourself in the next step for the built-in broker.\n- **The Maxxisun app** (“Smart Home Integration”) or a browser in your home network.\n- **CCU firmware** 2.42.103 or newer for reading, 2.43 or newer to change settings.\n\nYou do not need the CCU’s IP address, CCUs are found automatically. If Home Assistant already has MQTT I use it. Otherwise I offer a built-in broker, nothing has to be installed.",
         "user_title": "Set up Maxxicharge",
@@ -165,7 +171,7 @@ TEXT = {
 def build(lang: str) -> dict:
     t = TEXT[lang]
     entity: dict[str, dict] = {}
-    for item in list(const.CATALOG.values()) + list(const.DERIVED):
+    for item in list(const.CATALOG.values()) + list(const.DERIVED) + list(const.TOTAL):
         entity.setdefault(item.platform, {})[item.key] = {"name": getattr(item, lang)}
     return {
         "config": {
@@ -236,6 +242,7 @@ def build(lang: str) -> dict:
                     "description": t["op_desc"],
                     "data": {"broker_password": t["em_pass"]},
                 },
+                "total_info": {"title": t["ot_title"], "description": t["ot_desc"]},
                 "settings": {
                     "title": t["opt_title"],
                     "data": {"ip": t["ip"], "cleanup": t["opt_cleanup"]},
@@ -268,6 +275,7 @@ def build(lang: str) -> dict:
             "publish_failed": {"message": t["e_pub"]},
             "write_failed": {"message": t["e_fail"]},
             "invalid_option": {"message": t["e_opt"]},
+            "write_locked": {"message": t["e_lock"]},
         },
     }
 

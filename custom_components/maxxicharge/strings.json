@@ -112,6 +112,10 @@
           "broker_password": "Password (8–64 characters: letters, digits, _ . -)"
         }
       },
+      "total_info": {
+        "title": "Maxxicharge Total",
+        "description": "The total overview calculates across all CCUs. There is nothing to configure here. **Write protection** blocks all changes to the CCUs and is a switch on the device “Maxxicharge Gesamt”."
+      },
       "settings": {
         "title": "Maxxicharge options",
         "data": {
@@ -165,6 +169,9 @@
     "switch": {
       "ups_mode": {
         "name": "UPS mode"
+      },
+      "write_lock": {
+        "name": "Write protection"
       }
     },
     "sensor": {
@@ -368,6 +375,69 @@
       },
       "last_update": {
         "name": "Last update"
+      },
+      "efficiency": {
+        "name": "Round-trip efficiency"
+      },
+      "cycles": {
+        "name": "Charge cycles"
+      },
+      "runtime": {
+        "name": "Remaining runtime"
+      },
+      "time_to_full": {
+        "name": "Time to full"
+      },
+      "total_soc": {
+        "name": "State of charge total"
+      },
+      "total_usable_energy": {
+        "name": "Usable energy total"
+      },
+      "total_capacity": {
+        "name": "Capacity total"
+      },
+      "total_battery_charge_power": {
+        "name": "Battery charge power total"
+      },
+      "total_battery_discharge_power": {
+        "name": "Battery discharge power total"
+      },
+      "total_pv_power": {
+        "name": "PV power total"
+      },
+      "total_grid_power": {
+        "name": "Grid power"
+      },
+      "total_house_power": {
+        "name": "House consumption"
+      },
+      "total_ac_feed": {
+        "name": "Feed-in to house total"
+      },
+      "total_ac_draw": {
+        "name": "AC draw total"
+      },
+      "total_temperature": {
+        "name": "Temperature (highest)"
+      },
+      "total_pv_today": {
+        "name": "PV yield today total"
+      },
+      "total_house_today": {
+        "name": "House consumption today"
+      },
+      "total_autarky": {
+        "name": "Self-sufficiency today"
+      },
+      "total_self_consumption": {
+        "name": "Self-consumption today"
+      },
+      "total_runtime": {
+        "name": "Remaining runtime total"
+      },
+      "total_time_to_full": {
+        "name": "Time to full total"
       }
     },
     "binary_sensor": {
@@ -391,6 +461,12 @@
       },
       "write_possible": {
         "name": "Writing possible"
+      },
+      "total_online": {
+        "name": "CCUs connected"
+      },
+      "total_fault": {
+        "name": "Fault"
       }
     }
   },
@@ -431,6 +507,9 @@
     },
     "invalid_option": {
       "message": "Invalid selection: {option}"
+    },
+    "write_locked": {
+      "message": "Write protection is on. “{name}” was not changed. Turn write protection off in the device “Maxxicharge Gesamt”."
     }
   }
 }

@@ -14,6 +14,11 @@ CONF_CLEANUP = "cleanup"
 
 DEFAULT_PREFIX = "homeassistant"
 
+CONF_KIND = "kind"  # "ccu" (Standard) oder "total" (Gesamtübersicht)
+KIND_CCU = "ccu"
+KIND_TOTAL = "total"
+TOTAL_UNIQUE_ID = "maxxicharge_total"
+TOTAL_TICK = 5  # Sekunden: Aktualisierung der Gesamtwerte
 CONF_MODE = "mode"
 CONF_BROKER_PORT = "broker_port"
 CONF_BROKER_USER = "broker_user"
@@ -147,6 +152,34 @@ DERIVED: list[Item] = [
     Item("empty", "binary_sensor", "Speicher leer", "Battery empty", G_MAIN),
     Item("online", "binary_sensor", "Verbunden", "Connected", G_DIAG),
     Item("write_possible", "binary_sensor", "Schreiben möglich", "Writing possible", G_DIAG),
+    Item("efficiency", "sensor", "Wirkungsgrad", "Round-trip efficiency", G_ENERGY),
+    Item("cycles", "sensor", "Ladezyklen", "Charge cycles", G_ENERGY),
+    Item("runtime", "sensor", "Restlaufzeit", "Remaining runtime", G_MAIN),
+    Item("time_to_full", "sensor", "Zeit bis voll", "Time to full", G_MAIN),
+]
+
+# Gesamtübersicht über alle CCUs (eigenes Gerät „Maxxicharge Gesamt“)
+TOTAL: list[Item] = [
+    Item("total_soc", "sensor", "Ladestand gesamt", "State of charge total", G_MAIN),
+    Item("total_usable_energy", "sensor", "Nutzbare Restenergie gesamt", "Usable energy total", G_MAIN),
+    Item("total_capacity", "sensor", "Kapazität gesamt", "Capacity total", G_DIAG),
+    Item("total_battery_charge_power", "sensor", "Batterie Ladeleistung gesamt", "Battery charge power total", G_MAIN),
+    Item("total_battery_discharge_power", "sensor", "Batterie Entladeleistung gesamt", "Battery discharge power total", G_MAIN),
+    Item("total_pv_power", "sensor", "PV-Leistung gesamt", "PV power total", G_MAIN),
+    Item("total_grid_power", "sensor", "Netzleistung", "Grid power", G_MAIN),
+    Item("total_house_power", "sensor", "Hausverbrauch", "House consumption", G_MAIN),
+    Item("total_ac_feed", "sensor", "Einspeisung ins Haus gesamt", "Feed-in to house total", G_MAIN),
+    Item("total_ac_draw", "sensor", "AC-Aufnahme gesamt", "AC draw total", G_MAIN),
+    Item("total_temperature", "sensor", "Temperatur (höchste)", "Temperature (highest)", G_DIAG),
+    Item("total_pv_today", "sensor", "PV-Ertrag heute gesamt", "PV yield today total", G_ENERGY),
+    Item("total_house_today", "sensor", "Hausverbrauch heute", "House consumption today", G_ENERGY),
+    Item("total_autarky", "sensor", "Autarkiegrad heute", "Self-sufficiency today", G_ENERGY),
+    Item("total_self_consumption", "sensor", "Eigenverbrauchsquote heute", "Self-consumption today", G_ENERGY),
+    Item("total_runtime", "sensor", "Restlaufzeit gesamt", "Remaining runtime total", G_MAIN),
+    Item("total_time_to_full", "sensor", "Zeit bis voll gesamt", "Time to full total", G_MAIN),
+    Item("total_online", "binary_sensor", "CCUs verbunden", "CCUs connected", G_DIAG),
+    Item("total_fault", "binary_sensor", "Störung", "Fault", G_DIAG),
+    Item("write_lock", "switch", "Schreibschutz", "Write protection", G_CONFIG),
 ]
 
 SELECT_LABELS_DE = {

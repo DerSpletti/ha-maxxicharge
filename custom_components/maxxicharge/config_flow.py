@@ -36,6 +36,9 @@ from .const import (
     CLEANUP_DISABLE,
     CLEANUP_ENABLE,
     CLEANUP_NONE,
+    CONF_KIND,
+    KIND_TOTAL,
+    TOTAL_UNIQUE_ID,
     CONF_BROKER_PASSWORD,
     CONF_BROKER_PORT,
     CONF_BROKER_USER,
@@ -389,6 +392,12 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders={"ccu": self._disc[CONF_CCU_ID]},
         )
 
+    async def async_step_total(self, data: dict[str, Any]) -> ConfigFlowResult:
+        """Gesamtübersicht über alle CCUs (wird automatisch beim ersten CCU-Eintrag angelegt)."""
+        await self.async_set_unique_id(TOTAL_UNIQUE_ID)
+        self._abort_if_unique_id_configured()
+        return self.async_create_entry(title="Maxxicharge Gesamt", data={CONF_KIND: KIND_TOTAL})
+
     async def async_step_ccu(self, data: dict[str, Any]) -> ConfigFlowResult:
         """Eintrag für eine CCU anlegen (auch von weiteren Flows genutzt)."""
         await self.async_set_unique_id(data[CONF_CCU_ID])
@@ -398,6 +407,8 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        if config_entry.data.get(CONF_KIND) == KIND_TOTAL:
+            return TotalOptionsFlow()
         return MaxxiOptionsFlow()
 
 
@@ -498,3 +509,15 @@ class MaxxiOptionsFlow(OptionsFlow):
             ),
             errors=errors,
         )
+
+
+class TotalOptionsFlow(OptionsFlow):
+    """Gesamtübersicht: nichts einzustellen, nur ein Hinweis."""
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is not None:
+            return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(step_id="total_info", data_schema=vol.Schema({}))
+
+    async def async_step_total_info(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self.async_step_init(user_input)

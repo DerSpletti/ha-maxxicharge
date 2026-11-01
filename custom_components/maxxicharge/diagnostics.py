@@ -8,7 +8,7 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_CCU_ID, CONF_IP
+from .const import CONF_CCU_ID, CONF_IP, CONF_KIND, KIND_TOTAL
 
 TO_REDACT = {CONF_CCU_ID, CONF_IP, "broker_password", "broker_user", "unique_id", "CCU IP", "CCU ID", "serial_number"}
 
@@ -17,6 +17,13 @@ async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
     c = entry.runtime_data
+    if entry.data.get(CONF_KIND) == KIND_TOTAL:
+        return {
+            "kind": "total",
+            "options": dict(entry.options),
+            "values": dict(c.data),
+            "write_lock": c.write_lock,
+        }
     return {
         "entry": async_redact_data(dict(entry.data), TO_REDACT),
         "options": async_redact_data(dict(entry.options), TO_REDACT),

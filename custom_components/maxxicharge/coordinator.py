@@ -56,6 +56,19 @@ def to_kwh(value: float | None, unit: str | None) -> float | None:
     return None if factor is None else value * factor
 
 
+def capacity_kwh(c: "MaxxiCoordinator") -> float | None:
+    """Nutzbare Kapazität einer CCU in kWh (je nach Firmware unter anderem Namen gemeldet)."""
+    for name in ("Usable Energy Capacity", "Design Energy Capacity"):
+        val = to_kwh(c.num(name), c.unit(name))
+        if val:
+            return val
+    remaining = to_kwh(c.num("Usable Energy Remaining"), c.unit("Usable Energy Remaining"))
+    soc = c.num("Local Battery SOC")
+    if remaining and soc and soc > 5:
+        return round(remaining / (soc / 100), 3)
+    return None
+
+
 class MaxxiCoordinator:
     """Eine CCU: MQTT-Push, Verfügbarkeit, Firmware und verifiziertes Schreiben."""
 
@@ -286,6 +299,8 @@ class MaxxiCoordinator:
         """Wert senden und auf Bestätigung warten; sonst HomeAssistantError."""
         spec = self.specs.get(name)
         err = {"name": name, "value": str(value), "current": str(self.values.get(name)), "version": self.firmware or "?"}
+        if self.hass.data.get(DOMAIN, {}).get("write_lock"):
+            raise HomeAssistantError(translation_domain=DOMAIN, translation_key="write_locked", translation_placeholders=err)
         if spec is None or not spec.command_topic:
             raise HomeAssistantError(translation_domain=DOMAIN, translation_key="no_command_topic", translation_placeholders=err)
         if self.writable is False:

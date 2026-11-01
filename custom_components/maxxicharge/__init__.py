@@ -3,16 +3,24 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from homeassistant.components import mqtt
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.storage import Store
+from homeassistant.loader import async_get_integration
 
 from .bus import BrokerConflict, EmbeddedBus, HaBus, get_manager
 from .const import (
+    CONF_KIND,
+    KIND_CCU,
+    KIND_TOTAL,
     CONF_BROKER_PASSWORD,
     CONF_BROKER_PORT,
     CONF_BROKER_USER,
@@ -27,10 +35,15 @@ from .const import (
     MODE_HA,
 )
 from .coordinator import MaxxiCoordinator
+from .total import TotalCoordinator
 from .discovery import async_collect, specs_from_json, specs_to_json
 from .watcher import async_start_watcher
 
 _LOGGER = logging.getLogger(__name__)
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+CARD_URL = "/maxxicharge/maxxicharge-card.js"
+TOTAL_PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
 
 PLATFORMS = [
     Platform.SENSOR,
@@ -43,7 +56,36 @@ PLATFORMS = [
 type MaxxiConfigEntry = ConfigEntry[MaxxiCoordinator]
 
 
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Karte für das Dashboard bereitstellen (eine Datei, keine Abhängigkeiten)."""
+    try:
+        integration = await async_get_integration(hass, DOMAIN)
+        path = Path(__file__).parent / "frontend" / "maxxicharge-card.js"
+        await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(path), False)])
+        add_extra_js_url(hass, f"{CARD_URL}?v={integration.version}")
+    except Exception:  # noqa: BLE001 - die Karte ist optional, die Integration läuft auch ohne
+        _LOGGER.warning("Maxxicharge-Karte konnte nicht bereitgestellt werden", exc_info=True)
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: MaxxiConfigEntry) -> bool:
+    """Eintrag einrichten: Gesamtübersicht oder eine CCU."""
+    if entry.data.get(CONF_KIND, KIND_CCU) == KIND_TOTAL:
+        return await _async_setup_total(hass, entry)
+    return await _async_setup_ccu(hass, entry)
+
+
+async def _async_setup_total(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    coordinator = TotalCoordinator(hass, entry)
+    await coordinator.async_start()
+    entry.runtime_data = coordinator
+    entry.async_on_unload(coordinator.async_stop)
+    await hass.config_entries.async_forward_entry_setups(entry, TOTAL_PLATFORMS)
+    entry.async_on_unload(entry.add_update_listener(_async_reload))
+    return True
+
+
+async def _async_setup_ccu(hass: HomeAssistant, entry: MaxxiConfigEntry) -> bool:
     """CCU einrichten: Nachrichtenweg wählen, Discovery lesen, Entities anlegen."""
     ccu_id = entry.data[CONF_CCU_ID]
     prefix = entry.data.get(CONF_PREFIX, DEFAULT_PREFIX)
@@ -100,11 +142,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: MaxxiConfigEntry) -> boo
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload))
     _LOGGER.info("CCU %s eingerichtet (%s) mit %d Entities", ccu_id, mode, len(specs))
+    if not any(e.data.get(CONF_KIND) == KIND_TOTAL for e in hass.config_entries.async_entries(DOMAIN)):
+        hass.async_create_task(  # Gesamtübersicht einmalig anlegen (Duplikate bricht der Flow ab)
+            hass.config_entries.flow.async_init(
+                DOMAIN, context={"source": "total"}, data={CONF_KIND: KIND_TOTAL}
+            )
+        )
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: MaxxiConfigEntry) -> bool:
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    platforms = TOTAL_PLATFORMS if entry.data.get(CONF_KIND) == KIND_TOTAL else PLATFORMS
+    return await hass.config_entries.async_unload_platforms(entry, platforms)
 
 
 async def _async_reload(hass: HomeAssistant, entry: MaxxiConfigEntry) -> None:

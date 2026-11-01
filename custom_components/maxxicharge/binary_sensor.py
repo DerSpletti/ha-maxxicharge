@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 
-from .const import CATALOG, DERIVED, G_DIAG_OFF, TICK
+from .const import CATALOG, CONF_KIND, DERIVED, G_DIAG_OFF, KIND_CCU, KIND_TOTAL, TICK
 from .coordinator import MaxxiCoordinator
 from .entity import MaxxiEntity
 
@@ -22,6 +22,11 @@ SOC, MAX_SOC, MIN_SOC = "Local Battery SOC", "Maximum SOC", "Minimum SOC"
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
+    if entry.data.get(CONF_KIND, KIND_CCU) == KIND_TOTAL:
+        from .total_entities import TotalBinary
+
+        async_add_entities([TotalBinary(entry.runtime_data, "total_online"), TotalBinary(entry.runtime_data, "total_fault")])
+        return
     c: MaxxiCoordinator = entry.runtime_data
     entities: list[BinarySensorEntity] = []
     for name, spec in c.specs.items():

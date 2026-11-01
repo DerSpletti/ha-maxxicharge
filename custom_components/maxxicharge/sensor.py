@@ -17,8 +17,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 
-from .const import CATALOG, DERIVED, G_DIAG_OFF, TICK
-from .coordinator import MaxxiCoordinator, to_kwh
+from . import calc
+from .const import CATALOG, CONF_KIND, DERIVED, G_DIAG_OFF, KIND_CCU, KIND_TOTAL, TICK
+from .coordinator import MaxxiCoordinator, capacity_kwh, to_kwh
 from .entity import MaxxiEntity
 
 _BAD_CLASSES = {SensorDeviceClass.TIMESTAMP, SensorDeviceClass.DATE, SensorDeviceClass.ENUM}
@@ -43,6 +44,11 @@ def _device_class(device_class: str | None, unit: str | None) -> SensorDeviceCla
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
+    if entry.data.get(CONF_KIND, KIND_CCU) == KIND_TOTAL:
+        from .total_entities import SENSORS, TotalSensor
+
+        async_add_entities([TotalSensor(entry.runtime_data, key) for key in SENSORS])
+        return
     c: MaxxiCoordinator = entry.runtime_data
     entities: list[SensorEntity] = []
     for name, spec in c.specs.items():
@@ -75,6 +81,25 @@ async def async_setup_entry(
             lambda c: None if None in (to_kwh(c.num(bd), c.unit(bd)), to_kwh(c.num(bc), c.unit(bc)))
             else to_kwh(c.num(bd), c.unit(bd)) - to_kwh(c.num(bc), c.unit(bc)),
             unit=lambda c: "kWh", dc=SensorDeviceClass.ENERGY, sc=SensorStateClass.TOTAL, digits=2)
+    rem_n, dp_n, cp_n = "Usable Energy Remaining", "Battery Discharging Power", "Battery Charging Power"
+    derived("efficiency", (bd, bc),
+            lambda c: calc.efficiency(to_kwh(c.num(bd), c.unit(bd)), to_kwh(c.num(bc), c.unit(bc))),
+            unit=lambda c: "%", dc=None, sc=SensorStateClass.MEASUREMENT, digits=1)
+    derived("cycles", (bd,),
+            lambda c: calc.cycles(to_kwh(c.num(bd), c.unit(bd)), capacity_kwh(c)),
+            unit=lambda c: None, dc=None, sc=SensorStateClass.TOTAL_INCREASING, digits=1)
+    derived("runtime", (rem_n, dp_n),
+            lambda c: calc.hours_left(to_kwh(c.num(rem_n), c.unit(rem_n)), c.num(dp_n)),
+            unit=lambda c: "h", dc=SensorDeviceClass.DURATION, sc=SensorStateClass.MEASUREMENT, digits=1)
+
+    def _to_full(c: MaxxiCoordinator) -> float | None:
+        cap, rem = capacity_kwh(c), to_kwh(c.num(rem_n), c.unit(rem_n))
+        if cap is None or rem is None:
+            return None
+        return calc.hours_left(max(cap - rem, 0.0), c.num(cp_n))
+
+    derived("time_to_full", (rem_n, cp_n), _to_full,
+            unit=lambda c: "h", dc=SensorDeviceClass.DURATION, sc=SensorStateClass.MEASUREMENT, digits=1)
     entities.append(MaxxiLastUpdateSensor(c, _ITEMS["last_update"]))
     async_add_entities(entities)
 

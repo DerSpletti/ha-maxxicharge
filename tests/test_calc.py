@@ -1,0 +1,23 @@
+"""Tests der Rechen- und Regellogik (ohne Home Assistant)."""
+import importlib.util
+import sys
+
+spec = importlib.util.spec_from_file_location("calc", "custom_components/maxxicharge/calc.py")
+calc = importlib.util.module_from_spec(spec)
+sys.modules["calc"] = calc
+spec.loader.exec_module(calc)
+res = {}
+
+res["soc_weighted"] = calc.weighted_soc(3.432, 10.086) == 34.0
+res["soc_none"] = calc.weighted_soc(None, 5) is None and calc.weighted_soc(1, 0) is None
+res["house"] = calc.house_power(1180, 0, 498) == 682.0 and calc.house_power(None, 1, 1) is None
+res["house_energy"] = calc.house_energy_today(5.0, 1.0, 2.0, 0.5) == 5.5
+res["autarky"] = calc.autarky(2.0, 8.0) == 75.0 and calc.autarky(9, 8) == 0.0 and calc.autarky(1, 0.01) is None
+res["self_consumption"] = calc.self_consumption(1.0, 4.0) == 75.0 and calc.self_consumption(1, 0.0) is None
+res["efficiency"] = calc.efficiency(8.0, 10.0) == 80.0 and calc.efficiency(1, 0.5) is None
+res["cycles"] = calc.cycles(100.0, 5.0) == 20.0
+res["hours"] = calc.hours_left(2.0, 500) == 4.0 and calc.hours_left(2.0, 5) is None
+
+for k, v in res.items():
+    print("OK  " if v else "FAIL", k)
+sys.exit(0 if all(res.values()) else 1)

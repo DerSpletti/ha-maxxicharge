@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CATALOG
+from .const import CATALOG, CONF_KIND, KIND_CCU, KIND_TOTAL
 from .coordinator import MaxxiCoordinator
 from .entity import MaxxiEntity
 
@@ -17,6 +17,11 @@ from .entity import MaxxiEntity
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
+    if entry.data.get(CONF_KIND, KIND_CCU) == KIND_TOTAL:
+        from .total_entities import WriteLockSwitch
+
+        async_add_entities([WriteLockSwitch(entry.runtime_data)])
+        return
     c: MaxxiCoordinator = entry.runtime_data
     async_add_entities(
         MaxxiSwitch(c, name, CATALOG[name])

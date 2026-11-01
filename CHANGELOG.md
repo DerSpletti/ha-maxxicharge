@@ -10,6 +10,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - **Konfigurieren als Menü:** Verbindungsdaten für die CCU anzeigen (Broker, Port, Benutzer, Passwort),
   Passwort des eingebauten Brokers ändern, Einstellungen (IP, alte Entities aufräumen).
 - **Reparaturhinweis**, wenn eine CCU vom eingebauten Broker abgelehnt wird (mit Grund: Benutzername oder Passwort).
+- **Gesamtübersicht** („Maxxicharge Gesamt“, wird automatisch angelegt): Ladestand (kapazitätsgewichtet),
+  nutzbare Restenergie, Leistungen, Hausverbrauch, Autarkiegrad, Eigenverbrauchsquote, Restlaufzeit, Zeit bis voll.
+- **Kennzahlen pro CCU:** Wirkungsgrad, Ladezyklen, Restlaufzeit, Zeit bis voll.
+- **Schreibschutz-Schalter**, der alle Änderungen an den CCUs sperrt.
+- **Dashboard-Karte** `custom:maxxicharge-card` im Stil der Maxxisun-App (Haus, Kacheln, Verlauf), eine Datei ohne Abhängigkeiten.
 ### Geändert
 - „AC-Aufnahme (Laden)“ zeigt `0 W` statt `-0 W`.
 - Manifest: `integration_type: hub`, `loggers`.

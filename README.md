@@ -26,6 +26,12 @@ Energie, Einstellungen und Diagnose, mit deutschen Namen, unter einem Gerät pro
   und meldet sonst einen **Fehler im UI**. Angezeigt wird immer der echte Wert der CCU.
 - **Abgeleitete Werte:** Speicher voll/leer, nutzbare Restenergie in kWh, Einspeisung ins Haus, AC-Aufnahme,
   Netz- und Batteriebilanz.
+- **Gesamtübersicht:** Ein Gerät **„Maxxicharge Gesamt“** rechnet über alle CCUs: Ladestand (nach Kapazität
+  gewichtet), nutzbare Restenergie, Lade-/Entladeleistung, PV, Netz, **Hausverbrauch**, **Autarkiegrad**,
+  **Eigenverbrauchsquote**, Restlaufzeit und Zeit bis voll. Pro CCU kommen Wirkungsgrad und Ladezyklen dazu.
+- **Schreibschutz:** Ein Schalter im Gerät „Maxxicharge Gesamt“ sperrt alle Änderungen an den CCUs.
+- **Eigene Dashboard-Karte** im Stil der Maxxisun-App (Haus mit PV und Speicher, Kacheln, Verlauf „Haushalt“),
+  ohne Zusatzkarten. Siehe [Dashboard-Karte](#dashboard-karte).
 - **Diagnose:** „Verbunden“, „Letztes Update“, Firmware, „Schreiben möglich“, Hinweis unter *Reparaturen* bei
   Firmware unter 2.43, Diagnose-Download mit geschwärzten Zugangsdaten.
 - **Ohne Abhängigkeiten:** keine Zusatzpakete, kein Cloud-Konto, alles lokal.
@@ -74,11 +80,30 @@ Passwort nicht: Es gelten Benutzer und Passwort deines Brokers.
 | Hauptwerte | Ladestand, Nutzbare Restenergie, Batterie Lade-/Entladeleistung, CCU-Leistung (AC), Netzleistung, PV-Leistung, Betriebsmodus, Speicher voll/leer |
 | Energie | Abgabe/Aufnahme heute und gesamt, Netzbezug/-einspeisung, PV-Ertrag, Batterie geladen/entladen, Netz- und Batteriebilanz |
 | Konfiguration | Max. Ausgangsleistung, Max. Ladeleistung, Mindest-/Maximaler Ladestand, Leistung bei Zählerausfall, Ladestrategie, USV-Modus |
+| Pro CCU berechnet | Wirkungsgrad, Ladezyklen, Restlaufzeit, Zeit bis voll |
+| Gesamtübersicht | Ladestand gesamt, Hausverbrauch, Autarkiegrad, Eigenverbrauchsquote, PV gesamt, Netzleistung, Schreibschutz |
 | Diagnose | Verbunden, Letztes Update, Firmware, IP-Adresse, Temperatur, Laufzeit, Fehler-Flags, Schreiben möglich |
 
 Vorzeichen der CCU: positiv = Batterie entlädt bzw. CCU speist ins Haus bzw. Netzbezug, negativ = umgekehrt.
 Die Energiezähler sind **Schätzwerte**, die die CCU etwa alle 5 Minuten speichert, nicht für die Abrechnung.
+Hausverbrauch, Autarkie- und Eigenverbrauchsquote sind **Näherungen** aus Zähler- und CCU-Werten. Die Gesamtübersicht
+geht davon aus, dass alle CCUs am selben Zähler hängen.
 Ein Beispiel-Dashboard liegt unter [`examples/dashboard.yaml`](examples/dashboard.yaml).
+
+## Dashboard-Karte
+Nach der Einrichtung steht die Karte **Maxxicharge** in der Kartenauswahl (Browser-Cache einmal neu laden, falls
+sie fehlt). Per YAML:
+```yaml
+type: custom:maxxicharge-card
+title: Maxxicharge        # optional
+hours: 3                  # Zeitraum des Verlaufs in Stunden
+pv_max: 4000              # Skala der Balken in W (optional)
+house_max: 3000
+ccu_max: 2300
+```
+Die Karte liest die Entities der Gesamtübersicht automatisch. Einzelne lassen sich überschreiben:
+`entities: { pv: sensor.meine_pv, grid: sensor.mein_netz }`. Schlüssel: `pv`, `charge`, `discharge`, `grid`,
+`house`, `soc`, `feed`, `draw`, `runtime`, `ttf`, `autarky`, `usable`, `pvtoday`, `temp`, `fault`, `lock`, `online`.
 
 ## Einstellungen ändern: was „bestätigt“ heißt
 Die Integration sendet den Wert und wartet, bis die CCU ihn zurückmeldet. Das heißt: *gespeichert*, nicht

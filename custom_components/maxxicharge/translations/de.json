@@ -112,6 +112,10 @@
           "broker_password": "Passwort (8–64 Zeichen: Buchstaben, Ziffern, _ . -)"
         }
       },
+      "total_info": {
+        "title": "Maxxicharge Gesamt",
+        "description": "Die Gesamtübersicht rechnet über alle CCUs. Hier gibt es nichts einzustellen. Der **Schreibschutz** sperrt alle Änderungen an den CCUs und sitzt als Schalter im Gerät „Maxxicharge Gesamt“."
+      },
       "settings": {
         "title": "Maxxicharge-Optionen",
         "data": {
@@ -165,6 +169,9 @@
     "switch": {
       "ups_mode": {
         "name": "USV-Modus"
+      },
+      "write_lock": {
+        "name": "Schreibschutz"
       }
     },
     "sensor": {
@@ -368,6 +375,69 @@
       },
       "last_update": {
         "name": "Letztes Update"
+      },
+      "efficiency": {
+        "name": "Wirkungsgrad"
+      },
+      "cycles": {
+        "name": "Ladezyklen"
+      },
+      "runtime": {
+        "name": "Restlaufzeit"
+      },
+      "time_to_full": {
+        "name": "Zeit bis voll"
+      },
+      "total_soc": {
+        "name": "Ladestand gesamt"
+      },
+      "total_usable_energy": {
+        "name": "Nutzbare Restenergie gesamt"
+      },
+      "total_capacity": {
+        "name": "Kapazität gesamt"
+      },
+      "total_battery_charge_power": {
+        "name": "Batterie Ladeleistung gesamt"
+      },
+      "total_battery_discharge_power": {
+        "name": "Batterie Entladeleistung gesamt"
+      },
+      "total_pv_power": {
+        "name": "PV-Leistung gesamt"
+      },
+      "total_grid_power": {
+        "name": "Netzleistung"
+      },
+      "total_house_power": {
+        "name": "Hausverbrauch"
+      },
+      "total_ac_feed": {
+        "name": "Einspeisung ins Haus gesamt"
+      },
+      "total_ac_draw": {
+        "name": "AC-Aufnahme gesamt"
+      },
+      "total_temperature": {
+        "name": "Temperatur (höchste)"
+      },
+      "total_pv_today": {
+        "name": "PV-Ertrag heute gesamt"
+      },
+      "total_house_today": {
+        "name": "Hausverbrauch heute"
+      },
+      "total_autarky": {
+        "name": "Autarkiegrad heute"
+      },
+      "total_self_consumption": {
+        "name": "Eigenverbrauchsquote heute"
+      },
+      "total_runtime": {
+        "name": "Restlaufzeit gesamt"
+      },
+      "total_time_to_full": {
+        "name": "Zeit bis voll gesamt"
       }
     },
     "binary_sensor": {
@@ -391,6 +461,12 @@
       },
       "write_possible": {
         "name": "Schreiben möglich"
+      },
+      "total_online": {
+        "name": "CCUs verbunden"
+      },
+      "total_fault": {
+        "name": "Störung"
       }
     }
   },
@@ -431,6 +507,9 @@
     },
     "invalid_option": {
       "message": "Ungültige Auswahl: {option}"
+    },
+    "write_locked": {
+      "message": "Schreibschutz ist eingeschaltet. „{name}“ wurde nicht geändert. Schalte den Schreibschutz im Gerät „Maxxicharge Gesamt“ aus."
     }
   }
 }
