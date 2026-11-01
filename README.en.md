@@ -189,6 +189,12 @@ app again. The notice disappears as soon as the CCU can log in.
 </details>
 
 <details>
+<summary><b>A CCU is missing after a restart</b></summary>
+The integration notices and reloads itself after about 90 seconds (at most 3 times per hour). Otherwise: entry ⋮ → <b>Reload</b>. The log names the reason:
+whether the CCU is connected to the broker, when it last sent something and why a connection was closed.
+</details>
+
+<details>
 <summary><b>Values are “unavailable”</b></summary>
 The CCU has not reported for two minutes. Check the CCU’s Wi-Fi and the broker.
 </details>

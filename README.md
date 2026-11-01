@@ -195,6 +195,12 @@ App neu ein. Der Hinweis verschwindet, sobald sich die CCU anmelden kann.
 </details>
 
 <details>
+<summary><b>Nach einem Neustart fehlt eine CCU</b></summary>
+Die Integration erkennt das und lädt sich nach etwa 90 Sekunden selbst neu (höchstens 3 Mal pro Stunde). Sonst: Eintrag ⋮ → <b>Neu laden</b>. Das Log nennt den Grund:
+ob die CCU am Broker verbunden ist, wann sie zuletzt etwas gesendet hat und warum eine Verbindung beendet wurde.
+</details>
+
+<details>
 <summary><b>Werte sind „nicht verfügbar“</b></summary>
 Die CCU hat sich seit zwei Minuten nicht gemeldet. WLAN der CCU und den Broker prüfen.
 </details>
