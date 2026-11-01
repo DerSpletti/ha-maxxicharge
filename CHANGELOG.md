@@ -4,7 +4,7 @@ Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](htt
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ## [0.9.0] – 2026-11-01
-Erste veröffentlichte Version (Vorabversion auf dem Weg zu 1.0). Inoffizielle Integration für die **Maxxisun CCU V2 und V2+** per MQTT.
+Erste veröffentlichte Version (Vorabversion auf dem Weg zu 1.0). Privat gepflegte Integration für die **Maxxisun CCU V2 und V2+** per MQTT.
 
 ### Einrichtung
 - **Geführter Assistent:** Willkommensseite mit allem, was man braucht (IP, Port, Benutzer, Passwort), Anleitung für die Maxxisun-App
