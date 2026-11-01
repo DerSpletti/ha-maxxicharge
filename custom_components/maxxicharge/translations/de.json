@@ -42,7 +42,7 @@
       },
       "no_ccu": {
         "title": "Keine CCU gefunden",
-        "description": "Am Broker hat sich keine neue CCU gemeldet. Prüfe:\n\n- Ist in der Maxxisun-App unter „Smart Home Integration“ die MQTT-Verbindung eingeschaltet und gespeichert (oben „Verbunden“)? Broker `{broker}`, Port `{port}`.\n- Stimmen Benutzer und Passwort?\n- Ist die Firmware mindestens 2.42.103?\n- Sind CCU und Home Assistant im selben Netz?\n\nNach dem Speichern an der CCU dauert es einige Sekunden, bis sie sich meldet.",
+        "description": "Am Broker hat sich keine neue CCU gemeldet. Prüfe:\n\n- Ist in der Maxxisun-App unter „Smart Home Integration“ die MQTT-Verbindung eingeschaltet und gespeichert (oben „Verbunden“)? Broker `{broker}`, Port `{port}`.\n- Stimmen Benutzer und Passwort? Abgelehnte Anmeldungen am Broker (falscher Benutzer oder Passwort): `{rejected}`. Steht hier eine CCU, trage in der Maxxisun-App Benutzer **und** Passwort neu ein (nicht leer lassen, sonst bleibt das alte Passwort).\n- Ist die Firmware mindestens 2.42.103?\n- Sind CCU und Home Assistant im selben Netz?\n\nNach dem Speichern an der CCU dauert es einige Sekunden, bis sie sich meldet.",
         "menu_options": {
           "retry": "Erneut suchen",
           "manual": "CCU-ID manuell eingeben"

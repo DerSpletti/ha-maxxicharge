@@ -12,6 +12,7 @@ from collections.abc import Callable
 import hmac
 import logging
 import secrets
+import time
 from typing import NamedTuple
 
 _LOGGER = logging.getLogger(__name__)
@@ -151,6 +152,7 @@ class MiniBroker:
         self._clients: dict[str, _Client] = {}
         self._retained: dict[str, bytes] = {}
         self._internal: list[tuple[str, Callable[[Msg], None]]] = []
+        self._rejected: dict[str, float] = {}
 
     # ---------- Lebenszyklus ----------
     async def async_start(self) -> None:
@@ -171,6 +173,11 @@ class MiniBroker:
         self._server = None
         self._clients.clear()
         _LOGGER.info("Eingebauter MQTT-Broker gestoppt")
+
+    def recent_rejections(self, window: float = 120.0) -> list[str]:
+        """Clients, die sich zuletzt mit falschem Benutzer/Passwort angemeldet haben."""
+        now = time.monotonic()
+        return sorted(c for c, t in self._rejected.items() if now - t <= window)
 
     # ---------- Interne API ----------
     def subscribe(self, flt: str, cb: Callable[[Msg], None]) -> Callable[[], None]:
@@ -294,7 +301,12 @@ class MiniBroker:
             and hmac.compare_digest(user, self.username.encode())
             and hmac.compare_digest(pw, self.password.encode())
         ):
-            _LOGGER.warning("MQTT-Anmeldung abgelehnt (Benutzer oder Passwort falsch) von Client %s", cid)
+            self._rejected[cid] = time.monotonic()
+            _LOGGER.warning(
+                "MQTT-Anmeldung abgelehnt von Client %s: Benutzer oder Passwort stimmen nicht mit dem "
+                "eingebauten Broker überein (in der Maxxisun-App Benutzer und Passwort neu eintragen)",
+                cid,
+            )
             self._refuse(client, 5, 0x87)
             return False
         if len(self._clients) >= MAX_CLIENTS and cid not in self._clients:

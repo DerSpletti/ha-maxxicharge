@@ -134,7 +134,7 @@ async def _ha_broker_info(hass: HomeAssistant) -> dict[str, str]:
     # Add-on-Namen und Loopback kann die CCU nicht auflösen: dann die IP von Home Assistant
     if not host or "." not in host or host.startswith("127."):
         host = await _host_ip(hass)
-    return {"broker": str(host), "port": str(port), "user": "", "password": ""}
+    return {"broker": str(host), "port": str(port), "user": "", "password": "", "rejected": "–"}
 
 
 def _label(ccu_id: str, specs: dict[str, Spec]) -> str:
@@ -158,7 +158,7 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
         self._emb: dict[str, Any] = {}
         self._pw = _random_password()
         self._found: dict[str, dict[str, Spec]] = {}
-        self._ph: dict[str, str] = {"broker": "?", "port": "1883", "user": "", "password": ""}
+        self._ph: dict[str, str] = {"broker": "?", "port": "1883", "user": "", "password": "", "rejected": "–"}
 
     # ---------- Hilfen ----------
     def _existing_embedded(self) -> dict[str, Any] | None:
@@ -204,6 +204,10 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_select()
         if found:
             return self.async_abort(reason="already_configured")
+        if self._mode == MODE_EMBEDDED:
+            broker = get_manager(self.hass).broker
+            rejected = broker.recent_rejections() if broker else []
+            self._ph = {**self._ph, "rejected": ", ".join(rejected) or "–"}
         return await self.async_step_no_ccu()
 
     async def async_step_no_ccu(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -293,6 +297,7 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
             "port": str(self._emb[CONF_BROKER_PORT]),
             "user": self._emb[CONF_BROKER_USER],
             "password": self._emb[CONF_BROKER_PASSWORD],
+            "rejected": "–",
         }
         if user_input is not None:
             return await self._scan()
