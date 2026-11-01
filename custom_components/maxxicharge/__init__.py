@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 from homeassistant.components import mqtt
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -64,7 +64,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: MaxxiConfigEntry) -> boo
         entry.async_on_unload(lambda: manager.release(entry.entry_id))
         bus = EmbeddedBus(broker)
     else:
-        if not hass.config_entries.async_entries("mqtt") or not await mqtt.async_wait_for_mqtt_client(hass):
+        mqtt_entries = hass.config_entries.async_entries("mqtt")
+        if not mqtt_entries or not (
+            any(e.state is ConfigEntryState.LOADED for e in mqtt_entries)
+            or await mqtt.async_wait_for_mqtt_client(hass)
+        ):
             raise ConfigEntryNotReady(translation_domain=DOMAIN, translation_key="mqtt_not_ready")
         bus = HaBus(hass)
 

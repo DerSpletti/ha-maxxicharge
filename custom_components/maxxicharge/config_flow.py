@@ -13,7 +13,13 @@ import aiohttp
 import voluptuous as vol
 
 from homeassistant.components import mqtt
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigEntryState,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
@@ -96,10 +102,16 @@ def cleanup_autodiscovery(hass: HomeAssistant, ccu_id: str, mode: str) -> int:
 
 
 async def _mqtt_ready(hass: HomeAssistant) -> bool:
-    """MQTT ist in Home Assistant eingerichtet und verbunden."""
-    if not hass.config_entries.async_entries("mqtt"):
+    """MQTT ist in Home Assistant eingerichtet und geladen."""
+    entries = hass.config_entries.async_entries("mqtt")
+    if not entries:
         return False
-    return bool(await mqtt.async_wait_for_mqtt_client(hass))
+    if any(e.state is ConfigEntryState.LOADED for e in entries):
+        return True
+    try:
+        return bool(await mqtt.async_wait_for_mqtt_client(hass))
+    except Exception:  # noqa: BLE001
+        return False
 
 
 async def _host_ip(hass: HomeAssistant) -> str:
@@ -192,6 +204,10 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_select()
         if found:
             return self.async_abort(reason="already_configured")
+        return await self.async_step_no_ccu()
+
+    async def async_step_no_ccu(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Menü: keine CCU gefunden."""
         return self.async_show_menu(
             step_id="no_ccu", menu_options=["retry", "manual"], description_placeholders=self._ph
         )
@@ -223,6 +239,10 @@ class MaxxiConfigFlow(ConfigFlow, domain=DOMAIN):
         if existing:  # eingebauter Broker läuft schon für andere CCUs
             self._mode, self._emb = MODE_EMBEDDED, existing
             return await self.async_step_search()
+        return await self.async_step_broker_choice()
+
+    async def async_step_broker_choice(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Menü: eingebauter Broker oder eigenes MQTT."""
         return self.async_show_menu(
             step_id="broker_choice", menu_options=["embedded", "mqtt_missing"]
         )
