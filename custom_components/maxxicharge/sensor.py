@@ -121,10 +121,27 @@ class MaxxiSensor(MaxxiEntity, SensorEntity):
         except ValueError:
             self._attr_state_class = None
         self._numeric = bool(spec.unit or self._attr_device_class or self._attr_state_class)
+        self._uptime = name == "CCU Uptime"
+        if self._uptime:  # Laufzeit als lesbarer Text (Tage/Std/Min) statt Sekunden; Sekunden bleiben als Attribut
+            self._attr_native_unit_of_measurement = None
+            self._attr_device_class = None
+            self._attr_state_class = None
+            self._numeric = False
+
+    @property
+    def extra_state_attributes(self) -> dict[str, float] | None:
+        if self._uptime and (secs := self.coordinator.num(self._name)) is not None:
+            return {"sekunden": secs}
+        return None
 
     @property
     def native_value(self) -> float | str | None:
         val = self.coordinator.value(self._name)
+        if self._uptime:
+            try:
+                return calc.format_duration(float(val), self.hass.config.language.startswith("de")) if val else None
+            except ValueError:
+                return val
         if val is not None and self._name == "Operating Mode" and self.hass.config.language.startswith("de"):
             return OPERATING_MODES_DE.get(val.strip().lower(), val)  # unbekannte Werte unverändert
         if val is None or not self._numeric:

@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CATALOG, DOMAIN, SELECT_LABELS_DE
+from .const import CATALOG, DOMAIN, SELECT_LABELS, SELECT_LABELS_DE
 from .coordinator import MaxxiCoordinator
 from .entity import MaxxiEntity
 
@@ -32,7 +32,7 @@ class MaxxiSelect(MaxxiEntity, SelectEntity):
         super().__init__(coordinator, item.key, item.group, (name,), translation_key=item.key)
         self._name = name
         raw = coordinator.specs[name].options
-        self._to_label = {o: (SELECT_LABELS_DE.get(o, o) if german else o) for o in raw}
+        self._to_label = {o: SELECT_LABELS.get(o) or (SELECT_LABELS_DE.get(o, o) if german else o) for o in raw}
         self._to_raw = {v: k for k, v in self._to_label.items()}
         self._attr_options = list(self._to_label.values())
 

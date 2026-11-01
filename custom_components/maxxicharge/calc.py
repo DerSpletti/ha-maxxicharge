@@ -63,3 +63,22 @@ def hours_left(energy_kwh: float | None, power_w: float | None, minimum_w: float
     if energy_kwh is None or power_w is None or power_w < minimum_w or energy_kwh < 0:
         return None
     return round(energy_kwh * 1000 / power_w, 2)
+
+
+def format_duration(seconds: float | None, german: bool = True) -> str | None:
+    """Sekunden lesbar umrechnen: „2 Tage 3 Std 25 Min“ bzw. „2 d 3 h 25 min“."""
+    if seconds is None or seconds < 0:
+        return None
+    s = int(round(seconds))
+    if s < 60:
+        return f"{s} s"
+    d, rest = divmod(s, 86400)
+    h, rest = divmod(rest, 3600)
+    m = rest // 60
+    parts: list[str] = []
+    if d:
+        parts.append(f"{d} {('Tag' if d == 1 else 'Tage') if german else 'd'}")
+    if d or h:
+        parts.append(f"{h} {'Std' if german else 'h'}")
+    parts.append(f"{m} {'Min' if german else 'min'}")
+    return " ".join(parts)

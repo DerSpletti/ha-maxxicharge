@@ -18,6 +18,11 @@ res["efficiency"] = calc.efficiency(8.0, 10.0) == 80.0 and calc.efficiency(1, 0.
 res["cycles"] = calc.cycles(100.0, 5.0) == 20.0
 res["hours"] = calc.hours_left(2.0, 500) == 4.0 and calc.hours_left(2.0, 5) is None
 
+res["dur_hours"] = calc.format_duration(80753) == "22 Std 25 Min"
+res["dur_days"] = calc.format_duration(172975) == "2 Tage 0 Std 2 Min"
+res["dur_one_day_en"] = calc.format_duration(90000, False) == "1 d 1 h 0 min"
+res["dur_short"] = calc.format_duration(42) == "42 s" and calc.format_duration(None) is None
+
 for k, v in res.items():
     print("OK  " if v else "FAIL", k)
 sys.exit(0 if all(res.values()) else 1)

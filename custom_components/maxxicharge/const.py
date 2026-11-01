@@ -182,10 +182,12 @@ TOTAL: list[Item] = [
     Item("write_lock", "switch", "Schreibschutz", "Write protection", G_CONFIG),
 ]
 
+# Produktname des Herstellers für die Strategie „Price Plan“, in jeder Sprache
+SELECT_LABELS = {"Price Plan": "Dynamixx"}
+
 SELECT_LABELS_DE = {
     "Automatic": "Automatisch",
     "Time Plan": "Zeitplan",
-    "Price Plan": "Preisplan",
 }
 
 # Betriebsmodus der CCU (kommt englisch aus der CCU) für deutsche Oberfläche; unbekannte Werte bleiben unverändert
@@ -208,7 +210,7 @@ OPERATING_MODES_DE = {
     "fault": "Störung",
     "error": "Fehler",
     "time plan": "Zeitplan",
-    "price plan": "Preisplan",
+    "price plan": "Dynamixx",
     "grid charge": "Laden aus dem Netz",
     "feed in": "Einspeisen",
     "feed-in": "Einspeisen",

@@ -3,6 +3,11 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.5.1] – 2026-11-01
+### Geändert
+- Ladestrategie „Preisplan“ heißt jetzt **„Dynamixx“**, wie bei Maxxisun (in jeder Sprache).
+- **Laufzeit der CCU** wird lesbar angezeigt („22 Std 25 Min“, „2 Tage 0 Std 2 Min“) statt in Sekunden. Die Sekunden stehen als Attribut `sekunden` an der Entity.
+
 ## [0.5.0] – 2026-11-01
 ### Neu
 - **Karte pro CCU und für die Gesamtübersicht**, im Editor per Geräteauswahl wählbar.
@@ -77,6 +82,7 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Schreiben der Einstellungen mit Prüfung der Rückmeldung (Fehler im UI statt stillem Zurückspringen).
 - Abgeleitete Werte, Config- und Options-Flow, Diagnose, Firmware-Hinweis (Schreiben ab 2.43).
 
+[0.5.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.5.1
 [0.5.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.5.0
 [0.4.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.1
 [0.4.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.0
