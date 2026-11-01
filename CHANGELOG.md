@@ -3,7 +3,7 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
-## [0.4.0] – in Vorbereitung
+## [0.4.0] – 2026-11-01
 ### Neu
 - **Automatische Erkennung weiterer CCUs:** Meldet sich eine unbekannte CCU am Broker, erscheint sie unter
   *Geräte & Dienste* als „Entdeckt“ und lässt sich mit einem Klick einrichten.
@@ -60,7 +60,7 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Schreiben der Einstellungen mit Prüfung der Rückmeldung (Fehler im UI statt stillem Zurückspringen).
 - Abgeleitete Werte, Config- und Options-Flow, Diagnose, Firmware-Hinweis (Schreiben ab 2.43).
 
-[0.4.0]: https://github.com/DerSpletti/ha-maxxicharge/compare/v0.3.6...HEAD
+[0.4.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.4.0
 [0.3.6]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.6
 [0.3.5]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.5
 [0.3.4]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.3.4
