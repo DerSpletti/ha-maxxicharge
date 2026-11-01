@@ -101,7 +101,7 @@
       const show = want === "alle" ? devs : devs.filter((d) => d.id === want);
       for (const d of show) {
         const card = document.createElement("maxxicharge-card");
-        card.setConfig(d.total ? {} : { device: d.id });
+        card.setConfig(d.total ? { switcher: false } : { device: d.id, switcher: false });
         card.hass = this._hass;
         body.appendChild(card);
         this._cards.push(card);

@@ -3,6 +3,7 @@
  *
  * Optionen (alle optional):
  *   device: <Geräte-ID>       # CCU oder „Maxxicharge Gesamt“ (ohne Angabe: Gesamtübersicht); im Editor auswählbar
+ *   switcher: true            # Umschalter Gesamt / CCUs in der Karte (Standard: an, wenn kein Gerät festgelegt ist)
  *   modules: [scene, tiles, chart, stats]   # Bausteine: Haus-Grafik, Kacheln, Verlauf, Kennzahlen
  *   tiles: [pv, house, grid, ccu, store]    # welche Kacheln
  *   title: Maxxicharge        # Überschrift
@@ -81,6 +82,11 @@
   class MaxxichargeCard extends HTMLElement {
     setConfig(config) {
       this._config = { hours: 3, pv_max: 4000, house_max: 3000, ccu_max: 2300, ...config };
+      if (this._config.switcher === undefined) this._config.switcher = !this._config.device;
+      this._sel = null;
+      if (this._config.switcher) {
+        try { this._sel = localStorage.getItem(this._selKey()) || null; } catch (e) { this._sel = null; }
+      }
       if (!Array.isArray(this._config.modules) || !this._config.modules.length) this._config.modules = ALL_MODULES;
       if (!Array.isArray(this._config.tiles) || !this._config.tiles.length) this._config.tiles = ALL_TILES;
       this._built = false;
@@ -126,8 +132,29 @@
       this._idx = { byDev, byKey };
       return this._idx;
     }
+    _selKey() {
+      return `maxxicharge-card-sel:${this._config.title || ""}:${this._config.device || ""}`;
+    }
+    _device() {
+      if (this._sel) return this._sel === "total" ? undefined : this._sel;
+      return this._config.device;
+    }
+    _devices() {
+      const { byDev } = this._index(), ids = new Map();
+      for (const key of byDev.keys()) {
+        const [id, tk] = key.split("|");
+        const d = ids.get(id) || { id, total: false };
+        if (tk === "total_soc") d.total = true;
+        ids.set(id, d);
+      }
+      const list = [...ids.values()].map((d) => {
+        const dev = (this._hass.devices || {})[d.id] || {};
+        return { ...d, name: dev.name_by_user || dev.name || (d.total ? "Gesamt" : "CCU") };
+      });
+      return list.sort((a, b) => (a.total === b.total ? a.name.localeCompare(b.name) : a.total ? -1 : 1));
+    }
     _mode() {
-      const dev = this._config.device;
+      const dev = this._device();
       if (dev && !this._index().byDev.has(`${dev}|total_soc`)) return "ccu";
       return "total";
     }
@@ -138,7 +165,7 @@
       if (key === "lock") return byKey.get("write_lock") || null;
       if (this._mode() === "total") return byKey.get(TOTAL_KEYS[key]) || null;
       const tk = CCU_KEYS[key];
-      return tk ? byDev.get(`${this._config.device}|${tk}`) || null : null;
+      return tk ? byDev.get(`${this._device()}|${tk}`) || null : null;
     }
     _raw(key) {
       const id = this._entity(key);
@@ -177,7 +204,7 @@
     }
     _title() {
       if (this._config.title) return this._config.title;
-      const dev = this._config.device, d = dev && this._hass.devices && this._hass.devices[dev];
+      const dev = this._device(), d = dev && this._hass.devices && this._hass.devices[dev];
       return d ? d.name_by_user || d.name || "Maxxicharge" : "Maxxicharge";
     }
 
@@ -244,6 +271,10 @@
           .top { display:flex; align-items:center; justify-content:space-between; min-height:30px; }
           .title { font-weight:600; font-size:1.05em; letter-spacing:.2px; }
           .badges { display:flex; gap:6px; }
+          .chips { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 2px; }
+          .chips:empty { display:none; }
+          .chip { cursor:pointer; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.04); color:#cfd8d3; border-radius:14px; padding:3px 11px; font:inherit; font-size:.82em; }
+          .chip.on { background:#34c759; border-color:#34c759; color:#06210f; font-weight:600; }
           .badge { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; background:#f2b705; color:#1b1b1b; }
           .badge.lock { background:#d9a21a; }
           .badge.off { background:#555; color:#ddd; }
@@ -282,6 +313,7 @@
         </style>
         <ha-card>
           <div class="top"><div class="title"></div><div class="badges" id="badges"></div></div>
+          <div class="chips" id="chips"></div>
           <div class="msg" id="msg" hidden>Keine Maxxicharge-Werte gefunden. Wähle im Karten-Editor ein Gerät aus oder richte „Maxxicharge Gesamt“ ein.</div>
           <div id="main">
             <div class="scene" id="scene">
@@ -306,6 +338,36 @@
         </ha-card>`;
       this._built = true;
       this._applyLayout();
+    }
+
+    _renderChips() {
+      const box = this.shadowRoot.getElementById("chips");
+      if (!this._config.switcher) { box.innerHTML = ""; return; }
+      const devs = this._devices();
+      const current = this._sel || (this._config.device ? this._config.device : "total");
+      const sig = `${current}|${devs.map((d) => d.id + d.name).join(",")}`;
+      if (sig === this._chipSig) return;
+      this._chipSig = sig;
+      box.innerHTML = "";
+      if (devs.length < 2) return;
+      for (const d of devs) {
+        const key = d.total ? "total" : d.id;
+        const b = document.createElement("button");
+        b.className = `chip${current === key || (d.total && current === "total") ? " on" : ""}`;
+        b.textContent = d.name;
+        b.onclick = () => this._select(key);
+        box.appendChild(b);
+      }
+    }
+
+    _select(key) {
+      this._sel = key;
+      try { localStorage.setItem(this._selKey(), key); } catch (e) { /* ohne Speicher weiter */ }
+      this._hist = null;
+      this._histAt = 0;
+      this._chipSig = "";
+      this._update();
+      this._maybeLoadHistory();
     }
 
     _applyLayout() {
@@ -453,6 +515,7 @@
       const pv = this._num("pv"), grid = this._num("grid"), house = this._num("house"), soc = this._num("soc");
       const ch = this._num("charge"), dis = this._num("discharge"), feed = this._num("feed"), draw = this._num("draw");
       this.shadowRoot.querySelector(".title").textContent = this._title();
+      this._renderChips();
       const ok = [pv, grid, house, soc].some((v) => v !== null);
       $("msg").hidden = ok;
       $("main").style.display = ok ? "" : "none";
@@ -553,7 +616,8 @@
   // ---------- Karten-Editor (Gerät und Bausteine auswählen) ----------
   const LABELS = {
     title: "Titel (leer = Gerätename)",
-    device: "Gerät (leer = Maxxicharge Gesamt)",
+    device: "Startgerät (leer = Maxxicharge Gesamt)",
+    switcher: "Umschalter zwischen Geräten in der Karte anzeigen",
     modules: "Bausteine",
     tiles: "Kacheln",
     hours: "Verlauf in Stunden",
@@ -563,6 +627,7 @@
   };
   const SCHEMA = [
     { name: "device", selector: { device: { filter: [{ integration: "maxxicharge" }] } } },
+    { name: "switcher", selector: { boolean: {} } },
     { name: "title", selector: { text: {} } },
     {
       name: "modules",
@@ -633,6 +698,7 @@
       this._form.hass = this._hass;
       this._form.schema = SCHEMA;
       this._form.data = {
+        switcher: !this._config.device,
         modules: ALL_MODULES,
         tiles: ALL_TILES,
         hours: 3,

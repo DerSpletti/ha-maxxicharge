@@ -3,6 +3,11 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.7.0] – 2026-11-01
+### Neu
+- **Umschalter in der Karte:** Reiter für „Maxxicharge Gesamt“ und jede CCU direkt im Kopf der Karte. Ein Klick wechselt die Anzeige, die Auswahl wird im
+  Browser gemerkt. Option `switcher` (Standard: an, solange kein festes Gerät eingestellt ist), auch im Karten-Editor.
+
 ## [0.6.2] – 2026-11-01
 ### Geändert
 - **Ehrliche Meldung, wenn eine CCU eine Einstellung nie zurückmeldet** (z. B. CCU 79D8 mit Firmware 2.43.21): Statt „nicht übernommen“ steht dort
@@ -101,6 +106,7 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Schreiben der Einstellungen mit Prüfung der Rückmeldung (Fehler im UI statt stillem Zurückspringen).
 - Abgeleitete Werte, Config- und Options-Flow, Diagnose, Firmware-Hinweis (Schreiben ab 2.43).
 
+[0.7.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.7.0
 [0.6.2]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.2
 [0.6.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.1
 [0.6.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.0

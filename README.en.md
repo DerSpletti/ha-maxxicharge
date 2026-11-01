@@ -139,7 +139,8 @@ The card **Maxxicharge** appears in the card picker after setup (reload the brow
 (house graphic, tiles, “household” history, statistics) and the **tiles** (PV, consumption, grid, CCU output, storage). Via YAML:
 ```yaml
 type: custom:maxxicharge-card
-device: <device id>                       # empty = Maxxicharge Gesamt; picked in the editor
+device: <device id>                       # start device; empty = Maxxicharge Gesamt (picked in the editor)
+switcher: true                            # switch between total / CCUs inside the card (default: on if no device is fixed)
 modules: [scene, tiles, chart, stats]     # house graphic, tiles, history, statistics
 tiles: [pv, house, grid, ccu, store]      # which tiles
 title: Maxxicharge                        # empty = device name
@@ -148,6 +149,8 @@ pv_max: 4000                              # bar scales in W (optional)
 house_max: 3000
 ccu_max: 2300
 ```
+With the **switcher** on, the card shows tabs for “Maxxicharge Gesamt” and every CCU at the top. A click switches the view right inside the
+card (the choice is remembered in the browser). If you fix a device, the switcher is off by default; `switcher: true` turns it on anyway.
 Without the house graphic the tiles form a grid, e.g. for a compact card with only storage and CCU output. You can override
 single entities: `entities: { pv: sensor.my_pv, grid: sensor.my_grid }` (keys: `pv`, `charge`, `discharge`, `grid`, `house`,
 `soc`, `feed`, `draw`, `runtime`, `ttf`, `autarky`, `usable`, `pvtoday`, `temp`, `fault`, `lock`, `online`). A single CCU has

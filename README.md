@@ -144,7 +144,8 @@ fehlt). Sie funktioniert für die **Gesamtübersicht** und für **jede einzelne 
 CCU-Abgabe, Speicher) aus. Per YAML:
 ```yaml
 type: custom:maxxicharge-card
-device: <Geräte-ID>                       # leer = Maxxicharge Gesamt; im Editor per Auswahl
+device: <Geräte-ID>                       # Startgerät; leer = Maxxicharge Gesamt (im Editor per Auswahl)
+switcher: true                            # Umschalter Gesamt / CCUs in der Karte (Standard: an, wenn kein Gerät festgelegt ist)
 modules: [scene, tiles, chart, stats]     # Haus-Grafik, Kacheln, Verlauf, Kennzahlen
 tiles: [pv, house, grid, ccu, store]      # welche Kacheln
 title: Maxxicharge                        # leer = Gerätename
@@ -153,6 +154,8 @@ pv_max: 4000                              # Skala der Balken in W (optional)
 house_max: 3000
 ccu_max: 2300
 ```
+Ist der **Umschalter** an, stehen oben in der Karte Reiter für „Maxxicharge Gesamt“ und jede CCU. Ein Klick wechselt die Anzeige direkt in der
+Karte (die Auswahl wird im Browser gemerkt). Legst du ein festes Gerät fest, ist der Umschalter standardmäßig aus; mit `switcher: true` kannst du ihn trotzdem einschalten.
 Ohne Haus-Grafik ordnen sich die Kacheln als Raster an, so lässt sich zum Beispiel eine kompakte Karte nur mit Speicher und
 CCU-Abgabe bauen. Einzelne Entities lassen sich überschreiben: `entities: { pv: sensor.meine_pv, grid: sensor.mein_netz }`
 (Schlüssel: `pv`, `charge`, `discharge`, `grid`, `house`, `soc`, `feed`, `draw`, `runtime`, `ttf`, `autarky`, `usable`,
