@@ -105,3 +105,9 @@ bleibt nötig). Die Entity-ID kann bei dir abweichen, sie steht in HACS bzw. unt
 ## Entwicklung
 Katalog der Entities: `custom_components/maxxicharge/const.py`. Übersetzungen werden daraus erzeugt:
 `python3 scripts/generate_translations.py`.
+
+## Marken und Haftung
+Maxxisun und Maxxicharge sind Marken der Maxxihandel GmbH. Icon und Logo in `custom_components/maxxicharge/brand/`
+stammen von maxxisun.de und dienen nur dazu, die zugehörige Hardware zu kennzeichnen. Dieses Projekt ist
+inoffiziell und steht in keiner Verbindung zum Hersteller. Auf Wunsch des Herstellers werden die Bilder entfernt.
+

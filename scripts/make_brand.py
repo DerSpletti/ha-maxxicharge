@@ -1,6 +1,6 @@
 """Erzeugt die Marken-Bilder (Icon/Logo) für HA und HACS in custom_components/maxxicharge/brand/.
 
-Eigenes Motiv (Sonne + Batterie in Grün) mit dem Namen „Maxxisun“ als Herstellerhinweis.
+Hinweis: Das aktuelle brand/ stammt von maxxisun.de (siehe README), dieses Skript erzeugt nur einen eigenen Entwurf.
 Bewusst kein Nachbau des offiziellen Maxxisun-Logos (Marke des Herstellers).
 Aufruf (Pillow nötig):  python3 scripts/make_brand.py
 """
