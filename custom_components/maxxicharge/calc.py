@@ -84,11 +84,12 @@ def format_duration(seconds: float | None, german: bool = True) -> str | None:
     return " ".join(parts)
 
 
-MODEL_NAMES = {"CCU2_PLUS": "CCU V2+", "CCU2": "CCU V2"}
-
-
 def model_label(raw: str | None) -> str | None:
-    """Modellname aus dem Wert `deviceModel` der CCU (/api/info); None, wenn die CCU keins meldet (z. B. UNKNOWN)."""
-    if not raw:
+    """Modellname aus `deviceModel` der CCU (/api/info).
+
+    Nur `CCU2_PLUS` ist eine V2+. Jede andere Antwort (auch `UNKNOWN`) ist eine normale V2.
+    None, wenn die CCU gar kein Modell geliefert hat (nicht erreichbar).
+    """
+    if not raw or not raw.strip():
         return None
-    return MODEL_NAMES.get(raw.strip().upper())
+    return "CCU V2+" if raw.strip().upper() == "CCU2_PLUS" else "CCU V2"

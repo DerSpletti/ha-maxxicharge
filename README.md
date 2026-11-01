@@ -69,9 +69,9 @@ Es gibt keine fest eingebauten Topic-Namen: Alles kommt aus der Discovery der CC
 Beide Modelle melden sich mit einer Seriennummer der Form `CCU2-XXXX-XXXX-XXXX` und lassen sich nebeneinander am selben Zähler betreiben.
 
 **Modellerkennung:** Die Integration fragt bei jeder CCU `http://<IP>/api/info` ab (nur lesend, nur Adressen im Heimnetz) und zeigt das
-Ergebnis als Gerätemodell („CCU V2+“ bzw. „CCU V2“) und als Diagnose-Sensor **Modell**. Meldet die CCU kein bekanntes Modell
-(bei einer getesteten CCU steht dort `UNKNOWN`), zeigt der Sensor „Unbekannt“. Dann kannst du das Modell unter
-Eintrag → Konfigurieren → Einstellungen von Hand festlegen. Zuordnung: `CCU2_PLUS` = V2+, `CCU2` = V2.
+Ergebnis als Gerätemodell und als Diagnose-Sensor **Modell**. Es gilt: Meldet die CCU `CCU2_PLUS`, ist es eine **CCU V2+**.
+Jede andere Antwort (bei einer getesteten CCU steht dort `UNKNOWN`) ist eine normale **CCU V2**. Nur wenn die CCU gar nicht antwortet,
+steht „Unbekannt“. Liegt die Erkennung einmal falsch, lässt sich das Modell unter Eintrag → Konfigurieren → Einstellungen von Hand festlegen.
 
 ## Einrichtung in 4 Schritten
 <p align="center">

@@ -67,10 +67,10 @@ comes from the CCU’s discovery.
 
 Both models report a serial number like `CCU2-XXXX-XXXX-XXXX` and can run side by side on the same meter.
 
-**Model detection:** The integration queries `http://<IP>/api/info` on each CCU (read-only, local network addresses only) and shows
-the result as the device model (“CCU V2+” or “CCU V2”) and as the diagnostic sensor **Model**. If the CCU reports no known model
-(one tested CCU says `UNKNOWN`), the sensor shows “Unknown”. You can then set the model by hand under entry → Configure →
-Settings. Mapping: `CCU2_PLUS` = V2+, `CCU2` = V2.
+**Model detection:** The integration queries `http://<IP>/api/info` on each CCU (read-only, local network addresses only) and shows the
+result as the device model and as the diagnostic sensor **Model**. The rule: if the CCU reports `CCU2_PLUS` it is a **CCU V2+**.
+Any other answer (one tested CCU says `UNKNOWN`) is a regular **CCU V2**. Only if the CCU does not answer at all it says “Unknown”.
+If the detection is ever wrong, set the model by hand under entry → Configure → Settings.
 
 ## Setup in 4 steps
 <p align="center">
