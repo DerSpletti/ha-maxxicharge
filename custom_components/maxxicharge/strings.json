@@ -522,6 +522,9 @@
     },
     "write_locked": {
       "message": "Write protection is on. “{name}” was not changed. Turn write protection off in the device “Maxxicharge Gesamt”."
+    },
+    "write_unconfirmed": {
+      "message": "“{name}” = {value} was sent to the CCU but not confirmed: this CCU does not report the setting back (often older firmware). Check the value in the Maxxisun app and update the firmware if needed."
     }
   }
 }

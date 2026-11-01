@@ -17,6 +17,9 @@ def run():
     attempt("ESP32_c", "maxxicharge", " geheim123")     # Leerzeichen
     attempt("ESP32_d", "falsch", "geheim123")           # Benutzername
     attempt("ESP32_e", "maxxicharge", "ganzanders")     # Passwort
+    c = mqtt.Client(CallbackAPIVersion.VERSION2, client_id="ESP32_t"); c.username_pw_set("maxxicharge", "geheim123")
+    c.connect("127.0.0.1", PORT); c.loop_start(); time.sleep(0.4)
+    c.publish("maxxi/CCU/settings/result", '{"status":"applied"}').wait_for_publish(); time.sleep(0.4); c.loop_stop(); c.disconnect()
 
 async def main():
     br = b.MiniBroker(PORT, "maxxicharge", "geheim123", "127.0.0.1")
@@ -34,6 +37,7 @@ async def main():
         "user_hint": ("reject", "ESP32_d", "user") in events,
         "password_hint": ("reject", "ESP32_e", "password") in events,
         "recent_list": len(rej) == 4,
+        "unknown_topic": br.unknown_topics.get("maxxi/CCU/settings/result") == '{"status":"applied"}',
     }
     for k, v in res.items(): print("OK  " if v else "FAIL", k)
     sys.exit(0 if all(res.values()) else 1)

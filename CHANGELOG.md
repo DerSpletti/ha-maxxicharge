@@ -3,6 +3,13 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.6.2] – 2026-11-01
+### Geändert
+- **Ehrliche Meldung, wenn eine CCU eine Einstellung nie zurückmeldet** (z. B. CCU 79D8 mit Firmware 2.43.21): Statt „nicht übernommen“ steht dort
+  „an die CCU gesendet, aber nicht bestätigt“. Der Befehl kann trotzdem angenommen worden sein.
+- **Diagnose:** Der eingebaute Broker nennt im Log einmal je Topic, was die CCUs außer den bekannten Werten senden (z. B. Antworten auf Befehle).
+  Die Integration warnt einmalig im Log, welche Einstellungen eine CCU nicht zurückmeldet.
+
 ## [0.6.1] – 2026-11-01
 ### Geändert
 - **Modellerkennung:** Nur `CCU2_PLUS` gilt als **CCU V2+**. Jede andere Antwort der CCU (auch `UNKNOWN`) wird als normale **CCU V2** angezeigt.
@@ -94,6 +101,7 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Schreiben der Einstellungen mit Prüfung der Rückmeldung (Fehler im UI statt stillem Zurückspringen).
 - Abgeleitete Werte, Config- und Options-Flow, Diagnose, Firmware-Hinweis (Schreiben ab 2.43).
 
+[0.6.2]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.2
 [0.6.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.1
 [0.6.0]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.6.0
 [0.5.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.5.1

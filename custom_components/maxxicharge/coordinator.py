@@ -127,6 +127,7 @@ class MaxxiCoordinator:
         )
         # Modell der CCU erkennen: kurz nach dem Start (die IP kommt erst per MQTT), danach alle paar Stunden
         self._unsubs.append(async_call_later(self.hass, 20, self._info_job))
+        self._unsubs.append(async_call_later(self.hass, 180, self._check_unreported))
         self._unsubs.append(async_track_time_interval(self.hass, self._info_job, timedelta(seconds=INFO_REFRESH)))
 
     @callback
@@ -268,6 +269,16 @@ class MaxxiCoordinator:
         return calc.model_label(self.model_raw)
 
     @callback
+    def _check_unreported(self, _now: datetime) -> None:
+        """Einstellungen, die die CCU nie zurückmeldet, einmal im Log nennen (dort kann Schreiben nicht bestätigt werden)."""
+        missing = [n for n, sp in self.specs.items() if sp.command_topic and self.values.get(n) is None]
+        if missing:
+            _LOGGER.warning(
+                "CCU %s (Firmware %s) meldet diese Einstellungen nicht zurück, Schreiben kann nicht bestätigt werden: %s",
+                self.ccu_id, self.firmware or "?", ", ".join(f"{n} [{self.specs[n].state_topic}]" for n in missing),
+            )
+
+    @callback
     def _info_job(self, _now: datetime) -> None:
         self.hass.async_create_task(self.async_refresh_info())
 
@@ -381,6 +392,13 @@ class MaxxiCoordinator:
                     await fut
             except TimeoutError as exc:
                 err["current"] = str(self.values.get(name))
+                if self.values.get(name) is None:  # die CCU meldet diese Einstellung nie zurück
+                    _LOGGER.warning(
+                        "CCU %s: %s=%s gesendet, aber nicht bestätigt (die CCU meldet diese Einstellung nicht zurück; "
+                        "Befehl auf %s, Rückmeldung auf %s)",
+                        self.ccu_id, name, payload, spec.command_topic, spec.state_topic,
+                    )
+                    raise HomeAssistantError(translation_domain=DOMAIN, translation_key="write_unconfirmed", translation_placeholders=err) from exc
                 _LOGGER.warning(
                     "CCU %s hat %s=%s nicht übernommen (aktuell: %s, nach %.0f s)",
                     self.ccu_id, name, payload, err["current"], WRITE_TIMEOUT,

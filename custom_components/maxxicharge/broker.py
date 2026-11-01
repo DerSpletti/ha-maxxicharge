@@ -153,6 +153,7 @@ class MiniBroker:
         self._retained: dict[str, bytes] = {}
         self._internal: list[tuple[str, Callable[[Msg], None]]] = []
         self._rejected: dict[str, tuple[float, str]] = {}
+        self.unknown_topics: dict[str, str] = {}  # Topics, die kein Abonnent behandelt (z. B. Antworten der CCU)
         self.on_reject: Callable[[str, str], None] | None = None
         self.on_connect: Callable[[str], None] | None = None
 
@@ -214,7 +215,7 @@ class MiniBroker:
         body = _enc_str(topic) + (b"\x00" if client.level == 5 else b"") + payload
         return _packet(0x30 | (1 if retain else 0), body)
 
-    def _route(self, topic: str, payload: bytes, retain: bool) -> None:
+    def _route(self, topic: str, payload: bytes, retain: bool, source: "_Client | None" = None) -> None:
         if retain:
             if payload:
                 if topic in self._retained or len(self._retained) < MAX_RETAINED:
@@ -222,10 +223,16 @@ class MiniBroker:
             else:
                 self._retained.pop(topic, None)
         text = None
+        handled = False
         for flt, cb in list(self._internal):
             if topic_matches(flt, topic):
+                handled = True
                 text = text if text is not None else payload.decode("utf-8", "replace")
                 self._call(cb, Msg(topic, text))
+        if source is not None and not handled and topic not in self.unknown_topics and len(self.unknown_topics) < 40:
+            preview = payload.decode("utf-8", "replace")[:200]
+            self.unknown_topics[topic] = preview
+            _LOGGER.warning("Unbekanntes Topic von Client %s: %s = %s", source.client_id, topic, preview)
         for client in list(self._clients.values()):
             if any(topic_matches(f, topic) for f in client.subs):
                 client.send(self._publish_packet(client, topic, payload, False))
@@ -364,7 +371,7 @@ class MiniBroker:
             client.send(_packet(0x40, pid.to_bytes(2, "big")))
         elif qos == 2:
             client.send(_packet(0x50, pid.to_bytes(2, "big")))
-        self._route(topic, payload, retain)
+        self._route(topic, payload, retain, client)
 
     def _on_subscribe(self, client: _Client, body: bytes) -> None:
         r = _Reader(body)

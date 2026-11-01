@@ -522,6 +522,9 @@
     },
     "write_locked": {
       "message": "Schreibschutz ist eingeschaltet. „{name}“ wurde nicht geändert. Schalte den Schreibschutz im Gerät „Maxxicharge Gesamt“ aus."
+    },
+    "write_unconfirmed": {
+      "message": "„{name}“ = {value} wurde an die CCU gesendet, aber nicht bestätigt: Diese CCU meldet die Einstellung nicht zurück (oft ältere Firmware). Prüfe den Wert in der Maxxisun-App und aktualisiere ggf. die Firmware."
     }
   }
 }

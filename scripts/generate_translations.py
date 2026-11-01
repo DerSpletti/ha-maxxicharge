@@ -92,6 +92,7 @@ TEXT = {
         "e_pub": "Senden an den MQTT-Broker fehlgeschlagen („{name}“ = {value}).",
         "e_fail": "Die CCU hat „{name}“ = {value} nicht übernommen (aktueller Wert: {current}). Der Wert wurde vermutlich abgelehnt.",
         "e_opt": "Ungültige Auswahl: {option}",
+        "e_unconf": "„{name}“ = {value} wurde an die CCU gesendet, aber nicht bestätigt: Diese CCU meldet die Einstellung nicht zurück (oft ältere Firmware). Prüfe den Wert in der Maxxisun-App und aktualisiere ggf. die Firmware.",
     },
     "en": {
         "o_conn": "Show connection details for the CCU",
@@ -170,6 +171,7 @@ TEXT = {
         "e_pub": "Sending to the MQTT broker failed (“{name}” = {value}).",
         "e_fail": "The CCU did not accept “{name}” = {value} (current value: {current}). The value was probably rejected.",
         "e_opt": "Invalid selection: {option}",
+        "e_unconf": "“{name}” = {value} was sent to the CCU but not confirmed: this CCU does not report the setting back (often older firmware). Check the value in the Maxxisun app and update the firmware if needed.",
     },
 }
 
@@ -283,6 +285,7 @@ def build(lang: str) -> dict:
             "write_failed": {"message": t["e_fail"]},
             "invalid_option": {"message": t["e_opt"]},
             "write_locked": {"message": t["e_lock"]},
+            "write_unconfirmed": {"message": t["e_unconf"]},
         },
     }
 
