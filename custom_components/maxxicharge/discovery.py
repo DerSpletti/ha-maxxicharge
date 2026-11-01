@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import asdict, dataclass, field
 import json
 import logging
 import re
 import time
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from homeassistant.core import callback
@@ -178,12 +178,6 @@ def parse_message(prefix: str, topic: str, payload: str) -> list[Spec]:
         if spec:
             out.append(spec)
     return out
-
-
-def parse_config(prefix: str, topic: str, payload: str) -> Spec | None:
-    """Einzel-Entity (Kompatibilität)."""
-    specs = parse_message(prefix, topic, payload)
-    return specs[0] if specs else None
 
 
 def specs_to_json(specs: dict[str, Spec]) -> dict[str, Any]:

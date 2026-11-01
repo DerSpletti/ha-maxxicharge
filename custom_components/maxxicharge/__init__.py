@@ -18,25 +18,25 @@ from homeassistant.loader import async_get_integration
 
 from .bus import BrokerConflict, EmbeddedBus, HaBus, get_manager
 from .const import (
-    CONF_KIND,
-    KIND_CCU,
-    KIND_TOTAL,
     CONF_BROKER_PASSWORD,
     CONF_BROKER_PORT,
     CONF_BROKER_USER,
     CONF_CCU_ID,
+    CONF_KIND,
     CONF_MODE,
     CONF_PREFIX,
     DEFAULT_PREFIX,
     DISCOVERY_TIMEOUT,
     DOMAIN,
     EMBEDDED_WAIT,
+    KIND_CCU,
+    KIND_TOTAL,
     MODE_EMBEDDED,
     MODE_HA,
 )
 from .coordinator import MaxxiCoordinator
-from .total import TotalCoordinator
 from .discovery import async_collect, specs_from_json, specs_to_json
+from .total import TotalCoordinator
 from .watcher import async_start_watcher
 
 _LOGGER = logging.getLogger(__name__)

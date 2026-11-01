@@ -1,8 +1,14 @@
-import asyncio, importlib.util, sys, threading, time
+import asyncio
+import importlib.util
+import sys
+import threading
+import time
+
 spec = importlib.util.spec_from_file_location("broker", "/home/agent/projekte/maxxicharge/custom_components/maxxicharge/broker.py")
 b = importlib.util.module_from_spec(spec); sys.modules["broker"] = b; spec.loader.exec_module(b)
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
+
 PORT = 18830
 assert b.topic_matches("a/+/c", "a/x/c") and b.topic_matches("a/#", "a") and not b.topic_matches("+/x", "$sys/x")
 

@@ -1,5 +1,9 @@
 """Test des Discovery-Parsers (Einzel- und Geräte-Discovery) ohne Home Assistant."""
-import importlib.util, json, sys, types
+import importlib.util
+import json
+import sys
+import types
+
 for m in ["homeassistant", "homeassistant.core"]:
     sys.modules[m] = types.ModuleType(m)
 sys.modules["homeassistant.core"].callback = lambda f: f

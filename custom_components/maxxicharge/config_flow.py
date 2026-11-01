@@ -6,12 +6,10 @@ import ipaddress
 import logging
 import re
 import secrets
-import string
 from typing import Any
 
 import aiohttp
 import voluptuous as vol
-
 from homeassistant.components import mqtt
 from homeassistant.config_entries import (
     ConfigEntry,
@@ -36,9 +34,6 @@ from .const import (
     CLEANUP_DISABLE,
     CLEANUP_ENABLE,
     CLEANUP_NONE,
-    CONF_KIND,
-    KIND_TOTAL,
-    TOTAL_UNIQUE_ID,
     CONF_BROKER_PASSWORD,
     CONF_BROKER_PORT,
     CONF_BROKER_USER,
@@ -46,18 +41,21 @@ from .const import (
     CONF_CCUS,
     CONF_CLEANUP,
     CONF_IP,
+    CONF_KIND,
     CONF_MODE,
     CONF_MODEL,
     CONF_PREFIX,
-    MODEL_AUTO,
-    MODEL_V2,
-    MODEL_V2PLUS,
     DEFAULT_BROKER_PORT,
     DEFAULT_BROKER_USER,
     DEFAULT_PREFIX,
     DOMAIN,
+    KIND_TOTAL,
     MODE_EMBEDDED,
     MODE_HA,
+    MODEL_AUTO,
+    MODEL_V2,
+    MODEL_V2PLUS,
+    TOTAL_UNIQUE_ID,
 )
 from .discovery import Spec, async_collect
 

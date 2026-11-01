@@ -8,11 +8,11 @@ zugestellt (erlaubt, wenn QoS 0 gewährt wird). Keine HA-Importe, damit testbar.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
 import hmac
 import logging
 import secrets
 import time
+from collections.abc import Callable
 from typing import NamedTuple
 
 _LOGGER = logging.getLogger(__name__)
@@ -248,7 +248,7 @@ class MiniBroker:
         body = _enc_str(topic) + (b"\x00" if client.level == 5 else b"") + payload
         return _packet(0x30 | (1 if retain else 0), body)
 
-    def _route(self, topic: str, payload: bytes, retain: bool, source: "_Client | None" = None) -> None:
+    def _route(self, topic: str, payload: bytes, retain: bool, source: _Client | None = None) -> None:
         if retain:
             if payload:
                 if topic in self._retained or len(self._retained) < MAX_RETAINED:

@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
-from datetime import datetime, timedelta
 import ipaddress
 import logging
 import re
 import time
+from collections.abc import Callable
+from datetime import datetime, timedelta
 from typing import Any
 
 import aiohttp
@@ -25,6 +25,7 @@ from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
 
 from . import calc
+from .broker import client_matches
 from .const import (
     CONF_CCU_ID,
     CONF_IP,
@@ -33,15 +34,14 @@ from .const import (
     DEFAULT_PREFIX,
     DOMAIN,
     INFO_REFRESH,
+    MIN_WRITE_FIRMWARE,
     MODEL_AUTO,
     MODEL_LABELS,
-    MIN_WRITE_FIRMWARE,
     STALE_AFTER,
     TICK,
     TICK_SECONDS,
     WRITE_TIMEOUT,
 )
-from .broker import client_matches
 from .discovery import Spec, async_collect, specs_to_json
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ def to_kwh(value: float | None, unit: str | None) -> float | None:
     return None if factor is None else value * factor
 
 
-def capacity_kwh(c: "MaxxiCoordinator") -> float | None:
+def capacity_kwh(c: MaxxiCoordinator) -> float | None:
     """Nutzbare Kapazität einer CCU in kWh (je nach Firmware unter anderem Namen gemeldet)."""
     for name in ("Usable Energy Capacity", "Design Energy Capacity"):
         val = to_kwh(c.num(name), c.unit(name))
@@ -130,27 +130,21 @@ class MaxxiCoordinator:
         self.model_raw = meta.get("model_raw")
         self._last_ip = meta.get("ip")
         for topic in self._by_topic:
-            self._unsubs.append(
-                await self.bus.subscribe(topic, self._handle_state)
-            )
+            self._unsubs.append(await self.bus.subscribe(topic, self._handle_state))
         if self._avail_topic:
-            self._unsubs.append(
-                await self.bus.subscribe(self._avail_topic, self._handle_availability)
-            )
-        self._unsubs.append(
-            async_track_time_interval(self.hass, self._tick, timedelta(seconds=TICK_SECONDS))
-        )
+            self._unsubs.append(await self.bus.subscribe(self._avail_topic, self._handle_availability))
+        self._unsubs.append(async_track_time_interval(self.hass, self._tick, timedelta(seconds=TICK_SECONDS)))
         # Modell der CCU erkennen: kurz nach dem Start (die IP kommt erst per MQTT), danach alle paar Stunden
         self._unsubs.append(async_call_later(self.hass, 20, self._info_job))
+        self._unsubs.append(async_track_time_interval(self.hass, self._info_job, timedelta(seconds=INFO_REFRESH)))
         self._unsubs.append(async_call_later(self.hass, 180, self._check_unreported))
         broker = getattr(self.bus, "broker", None)
         if broker is not None:  # eingebauter Broker: bei jeder Anmeldung der CCU die Beschreibung prüfen
             self._unsubs.append(broker.add_connect_listener(self._on_client_connect))
         (_LOGGER.warning if self.source == "cache" else _LOGGER.info)(
             "CCU %s: %d Entities, %d Topics abonniert (Quelle: %s)",
-            self.ccu_id, len(self.specs), len(self._by_topic) + (1 if self._avail_topic else 0), self.source,
+            self.ccu_id, len(self.specs), self.topic_count, self.source,
         )
-        self._unsubs.append(async_track_time_interval(self.hass, self._info_job, timedelta(seconds=INFO_REFRESH)))
 
     @callback
     def async_stop(self) -> None:
@@ -243,6 +237,11 @@ class MaxxiCoordinator:
         self._watchdog()
 
     # ---------- Zustand ----------
+    @property
+    def topic_count(self) -> int:
+        """Anzahl der abonnierten Topics (für Diagnose)."""
+        return len(self._by_topic) + (1 if self._avail_topic else 0)
+
     @property
     def available(self) -> bool:
         if self.online is False or self.last_update is None:

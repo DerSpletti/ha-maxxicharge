@@ -3,6 +3,13 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.9.3] – 2026-11-01
+### Geändert
+- **Aufgeräumt:** Code-Stil vereinheitlicht (ruff), toter Code entfernt, Start der CCU-Verbindung übersichtlicher geordnet.
+- **Diagnose-Download** enthält jetzt Modell, Quelle der Beschreibung, Zahl der abonnierten Topics und den Verbindungsstatus der CCU am Broker. CCU-Kennungen in Topics sind geschwärzt.
+- Projektdateien ergänzt: `CONTRIBUTING.md`, `SECURITY.md`, `tests/README.md`, ein Testlauf mit einem Befehl (`tests/run_all.sh`) und ein End-to-End-Test mit simulierter CCU.
+- Interne Hilfsdokumente aus dem Repository entfernt.
+
 ## [0.9.2] – 2026-11-01
 ### Behoben
 - **Eine CCU lieferte nach einem Neustart von Home Assistant keine Daten mehr** (es half nur, den Eintrag neu zu laden). Die Integration vergleicht jetzt nach jeder
@@ -69,5 +76,6 @@ Erste veröffentlichte Version (Vorabversion auf dem Weg zu 1.0). Privat gepfleg
 - Hausverbrauch, Autarkie- und Eigenverbrauchsquote sind Näherungen. Energiezähler der CCU sind Schätzwerte.
 - Das Schreiben von Einstellungen und der Betrieb mit einem vorhandenen MQTT-Broker sind auf echter Hardware noch wenig erprobt.
 
+[0.9.3]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.9.3
 [0.9.2]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.9.2
 [0.9.1]: https://github.com/DerSpletti/ha-maxxicharge/releases/tag/v0.9.1

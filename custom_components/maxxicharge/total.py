@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from datetime import datetime, timedelta
-import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
@@ -88,9 +88,12 @@ class TotalCoordinator:
     def all_ccus(self) -> list[MaxxiCoordinator]:
         out = []
         for e in self.hass.config_entries.async_entries(DOMAIN):
-            if e.data.get(CONF_KIND, KIND_CCU) == KIND_CCU and e.state is ConfigEntryState.LOADED:
-                if isinstance(getattr(e, "runtime_data", None), MaxxiCoordinator):
-                    out.append(e.runtime_data)
+            if (
+                e.data.get(CONF_KIND, KIND_CCU) == KIND_CCU
+                and e.state is ConfigEntryState.LOADED
+                and isinstance(getattr(e, "runtime_data", None), MaxxiCoordinator)
+            ):
+                out.append(e.runtime_data)
         return out
 
     def _avail(self) -> list[MaxxiCoordinator]:

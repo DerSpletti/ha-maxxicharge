@@ -27,9 +27,9 @@ def canvas(w: int, h: int) -> tuple[Image.Image, ImageDraw.ImageDraw]:
     img = Image.new("RGB", (w * SS, h * SS), BG1)
     px = img.load()
     for y in range(h * SS):
-        for x in range(0, w * SS):
+        for x in range(w * SS):
             t = (x / (w * SS) * 0.6 + y / (h * SS) * 0.4)
-            px[x, y] = tuple(int(a + (b - a) * t) for a, b in zip(BG1, BG2))
+            px[x, y] = tuple(int(a + (b - a) * t) for a, b in zip(BG1, BG2, strict=True))
     return img, ImageDraw.Draw(img)
 
 
