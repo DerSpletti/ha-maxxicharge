@@ -15,9 +15,9 @@ dashboard card in the style of the Maxxisun app.
 
 *Deutsche Version: [README.md](README.md)*
 
-> **Version 0.9.0 (pre-release), unofficial.** Developed and tested with two CCUs (firmware 2.43.21 and 2.43.53) on the built-in broker.
-> Changing settings and running with an existing MQTT broker have seen little real-hardware testing so far. This project is
-> not affiliated with the manufacturer (see [Trademarks and liability](#trademarks-and-liability)).
+> **Version 0.9.0 (pre-release), privately maintained.** Developed and tested with two CCUs (firmware 2.43.21 and 2.43.53) on the built-in broker.
+> Changing settings and running with an existing MQTT broker have seen little real-hardware testing so far. It is
+> not an official release of the manufacturer (see [Trademarks and liability](#trademarks-and-liability)).
 
 ## Contents
 [At a glance](#at-a-glance) · [Preview](#preview) · [How it works](#how-it-works) · [Setup](#setup-in-4-steps) ·
@@ -240,7 +240,7 @@ For developers: the entity catalog is in `custom_components/maxxicharge/const.py
 under `tests/` run without Home Assistant (`paho-mqtt` for the broker tests).
 
 ## Trademarks and liability
-This is an **unofficial** project and not affiliated with Maxxihandel GmbH. *Maxxisun* and *Maxxicharge* are trademarks of the
-manufacturer. The icon and logo in `custom_components/maxxicharge/brand/` and in the banner come from maxxisun.de and only
-identify the related hardware. They will be removed on the manufacturer’s request. Use at your own risk; changing settings on the
-storage is your own responsibility. License: [MIT](LICENSE) (applies to the code, not to the trademarks).
+This is a privately maintained project and not an official release of Maxxihandel GmbH. *Maxxisun* and *Maxxicharge* are trademarks of the
+manufacturer. The icon and logo in `custom_components/maxxicharge/brand/` and in the banner are used **with the manufacturer’s permission** and
+identify the related hardware (see [NOTICE.md](NOTICE.md)). Use at your own risk; changing settings on the storage is your own responsibility.
+License: [MIT](LICENSE) (applies to the code, not to the trademarks).

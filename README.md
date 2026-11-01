@@ -15,9 +15,9 @@ bringt eine eigene Dashboard-Karte im Stil der Maxxisun-App mit.
 
 *English version: [README.en.md](README.en.md)*
 
-> **Version 0.9.0 (Vorabversion), inoffiziell.** Entwickelt und getestet mit zwei CCUs (Firmware 2.43.21 und 2.43.53) am eingebauten Broker.
+> **Version 0.9.0 (Vorabversion), privat gepflegt.** Entwickelt und getestet mit zwei CCUs (Firmware 2.43.21 und 2.43.53) am eingebauten Broker.
 > Das Ändern von Einstellungen und der Betrieb mit einem vorhandenen MQTT-Broker sind auf echter Hardware noch wenig
-> erprobt. Dieses Projekt steht in keiner Verbindung zum Hersteller (siehe [Marken und Haftung](#marken-und-haftung)).
+> erprobt. Es ist keine offizielle Veröffentlichung des Herstellers (siehe [Marken und Haftung](#marken-und-haftung)).
 
 ## Inhalt
 [Auf einen Blick](#auf-einen-blick) · [Vorschau](#vorschau) · [So funktioniert es](#so-funktioniert-es) ·
@@ -251,8 +251,7 @@ mit `python3 scripts/generate_translations.py`. Die Schaubilder dieser README en
 Broker-Tests).
 
 ## Marken und Haftung
-Dies ist ein **inoffizielles** Projekt und steht in keiner Verbindung zur Maxxihandel GmbH. *Maxxisun* und *Maxxicharge*
-sind Marken des Herstellers. Icon und Logo in `custom_components/maxxicharge/brand/` und im Banner stammen von maxxisun.de
-und dienen nur dazu, die zugehörige Hardware zu kennzeichnen. Auf Wunsch des Herstellers werden sie entfernt. Die Nutzung
-erfolgt auf eigene Gefahr, das Ändern von Einstellungen am Speicher geschieht auf eigene Verantwortung.
-Lizenz: [MIT](LICENSE) (gilt für den Code, nicht für die Marken).
+Dies ist ein privat gepflegtes Projekt und keine offizielle Veröffentlichung der Maxxihandel GmbH. *Maxxisun* und *Maxxicharge* sind Marken des
+Herstellers. Icon und Logo in `custom_components/maxxicharge/brand/` und im Banner werden **mit Genehmigung des Herstellers** verwendet und
+kennzeichnen die zugehörige Hardware (siehe [NOTICE.md](NOTICE.md)). Die Nutzung erfolgt auf eigene Gefahr, das Ändern von Einstellungen am
+Speicher geschieht auf eigene Verantwortung. Lizenz: [MIT](LICENSE) (gilt für den Code, nicht für die Marken).

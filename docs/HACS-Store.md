@@ -28,4 +28,4 @@ Voraussetzungen laut https://www.hacs.xyz/docs/publish/include/ und Stand dieses
    - PR öffnen und die **Vorlage vollständig und wahrheitsgemäß** ausfüllen (sonst wird er kommentarlos geschlossen). Der PR muss von deinem persönlichen Konto kommen, nicht von einer Organisation.
 5. **Warten.** Das Review dauert laut HACS oft **Monate**. Den Stand siehst du im Backlog bei `hacs/default`. Bis dahin funktioniert die Installation weiter als „Benutzerdefiniertes Repository“.
 
-Hinweis: Die Marke „Maxxisun“ und das Logo gehören dem Hersteller (siehe `NOTICE.md`). Für den offiziellen Store ist es sinnvoll, vorher bei Maxxisun nachzufragen, ob Icon und Logo verwendet werden dürfen.
+Hinweis: Icon und Logo von Maxxisun werden mit Genehmigung des Herstellers verwendet (siehe `NOTICE.md`).
