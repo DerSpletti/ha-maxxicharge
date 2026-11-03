@@ -3,7 +3,6 @@
 </p>
 
 <p align="center">
-  <a href="https://hacs.xyz"><img alt="HACS: Custom" src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg"></a>
   <a href="https://github.com/DerSpletti/ha-maxxicharge/releases"><img alt="Version" src="https://img.shields.io/github/v/release/DerSpletti/ha-maxxicharge"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green.svg"></a>
   <img alt="Home Assistant 2025.1+" src="https://img.shields.io/badge/Home%20Assistant-2025.1%2B-18bcf2.svg">
@@ -15,7 +14,7 @@ dashboard card in the style of the Maxxisun app.
 
 *Deutsche Version: [README.md](README.md)*
 
-> **Version 0.9.2 (pre-release), privately maintained.** Developed and tested with two CCUs (firmware 2.43.21 and 2.43.53) on the built-in broker.
+> **Privately maintained.** Developed and tested with two CCUs (firmware 2.43.21 and 2.43.53) on the built-in broker.
 > Changing settings and running with an existing MQTT broker have seen little real-hardware testing so far. It is
 > not an official release of the manufacturer (see [Trademarks and liability](#trademarks-and-liability)).
 
@@ -80,8 +79,7 @@ If the detection is ever wrong, set the model by hand under entry → Configure 
 ### 1. Install
 [![Open repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=DerSpletti&repository=ha-maxxicharge&category=integration)
 
-Or HACS ⋮ → *Custom repositories* → `https://github.com/DerSpletti/ha-maxxicharge`, category *Integration*. Download
-*Maxxicharge* and **restart** Home Assistant. Manual: copy `custom_components/maxxicharge` to `<config>/custom_components/`.
+Or search for *Maxxicharge* in HACS (category *Integration*), download it and **restart** Home Assistant. Manual: copy `custom_components/maxxicharge` to `<config>/custom_components/`.
 
 ### 2. Add the integration
 Settings → Devices & services → **Add integration → Maxxicharge**. The welcome page shows what you need: the IP of Home

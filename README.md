@@ -3,7 +3,6 @@
 </p>
 
 <p align="center">
-  <a href="https://hacs.xyz"><img alt="HACS: Benutzerdefiniert" src="https://img.shields.io/badge/HACS-Benutzerdefiniert-41BDF5.svg"></a>
   <a href="https://github.com/DerSpletti/ha-maxxicharge/releases"><img alt="Version" src="https://img.shields.io/github/v/release/DerSpletti/ha-maxxicharge"></a>
   <a href="LICENSE"><img alt="Lizenz: MIT" src="https://img.shields.io/badge/Lizenz-MIT-green.svg"></a>
   <img alt="Home Assistant 2025.1+" src="https://img.shields.io/badge/Home%20Assistant-2025.1%2B-18bcf2.svg">
@@ -15,7 +14,7 @@ bringt eine eigene Dashboard-Karte im Stil der Maxxisun-App mit.
 
 *English version: [README.en.md](README.en.md)*
 
-> **Version 0.9.2 (Vorabversion), privat gepflegt.** Entwickelt und getestet mit zwei CCUs (Firmware 2.43.21 und 2.43.53) am eingebauten Broker.
+> **Privat gepflegt.** Entwickelt und getestet mit zwei CCUs (Firmware 2.43.21 und 2.43.53) am eingebauten Broker.
 > Das Ändern von Einstellungen und der Betrieb mit einem vorhandenen MQTT-Broker sind auf echter Hardware noch wenig
 > erprobt. Es ist keine offizielle Veröffentlichung des Herstellers (siehe [Marken und Haftung](#marken-und-haftung)).
 
@@ -81,8 +80,7 @@ steht „Unbekannt“. Liegt die Erkennung einmal falsch, lässt sich das Modell
 ### 1. Installieren
 [![Repository in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=DerSpletti&repository=ha-maxxicharge&category=integration)
 
-Oder in HACS ⋮ → *Benutzerdefinierte Repositories* → `https://github.com/DerSpletti/ha-maxxicharge`, Kategorie
-*Integration*. *Maxxicharge* herunterladen, Home Assistant **neu starten**.
+Oder in HACS nach *Maxxicharge* suchen (Kategorie *Integration*), herunterladen und Home Assistant **neu starten**.
 Manuell: Ordner `custom_components/maxxicharge` nach `<config>/custom_components/` kopieren.
 
 ### 2. Integration hinzufügen
