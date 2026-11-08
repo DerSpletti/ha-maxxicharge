@@ -14,6 +14,9 @@ dashboard card in the style of the Maxxisun app.
 
 *Deutsche Version: [README.md](README.md)*
 
+> ⚠️ **Only for the Maxxisun CCU with the MQTT interface enabled** (firmware 2.42.103 or newer). The MQTT connection is
+> switched on in the **Maxxisun app** under *Smart Home Integration*. Unofficial, not a product of the manufacturer.
+
 > **Privately maintained.** Developed and tested with two CCUs (firmware 2.43.21 and 2.43.53) on the built-in broker.
 > Changing settings and running with an existing MQTT broker have seen little real-hardware testing so far. It is
 > not an official release of the manufacturer (see [Trademarks and liability](#trademarks-and-liability)).

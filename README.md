@@ -14,6 +14,9 @@ bringt eine eigene Dashboard-Karte im Stil der Maxxisun-App mit.
 
 *English version: [README.en.md](README.en.md)*
 
+> ⚠️ **Nur für die Maxxisun CCU mit aktivierter MQTT-Schnittstelle** (Firmware ab 2.42.103). Die MQTT-Verbindung wird in der
+> **Maxxisun-App** unter *Smart Home Integration* eingeschaltet. Inoffiziell, kein Produkt des Herstellers.
+
 > **Privat gepflegt.** Entwickelt und getestet mit zwei CCUs (Firmware 2.43.21 und 2.43.53) am eingebauten Broker.
 > Das Ändern von Einstellungen und der Betrieb mit einem vorhandenen MQTT-Broker sind auf echter Hardware noch wenig
 > erprobt. Es ist keine offizielle Veröffentlichung des Herstellers (siehe [Marken und Haftung](#marken-und-haftung)).
