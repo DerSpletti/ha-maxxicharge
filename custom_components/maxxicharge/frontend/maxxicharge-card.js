@@ -114,30 +114,30 @@
     return { items, more: Math.max(0, n - shown) };
   }
 
-  // Gesamtlayout: Speicher stapeln sich zu Türmen (bis SCENE.perTower übereinander), weitere Türme stehen daneben.
-  // Die CCU sitzt oben auf dem Turm; weitere CCUs stapeln sich darüber.
-  function sceneLayout(nCcu, nBat) {
-    const per = SCENE.perTower, nTow = Math.ceil(Math.max(nBat, 0) / per);
-    const row = sceneRow(nTow, SCENE.battery), items = [], cnt = [];
-    row.items.forEach((t, j) => {
-      const c = Math.min(per, nBat - j * per);
-      cnt.push(c);
-      for (let l = 0; l < c; l++) items.push({ x: t.x, y: t.y - l * SCENE.lift * t.s, s: t.s, j, l });
+  // Gesamtlayout: Jede CCU bekommt ihre eigenen Speicher. Diese stapeln sich zu Türmen (bis SCENE.perTower übereinander),
+  // weitere Türme der CCU stehen daneben. Die CCU sitzt oben auf ihrem ersten Turm. perCcu = Speicher je CCU (sonst gleichmäßig verteilt).
+  function sceneLayout(nCcu, nBat, perCcu) {
+    const per = SCENE.perTower, nc = Math.max(nCcu, 1);
+    let counts = Array.isArray(perCcu) && perCcu.length === nc ? perCcu.map((v) => Math.max(0, v)) : [];
+    if (!counts.length) for (let c = 0; c < nc; c++) counts.push(Math.floor(nBat / nc) + (c < nBat % nc ? 1 : 0));
+    const towers = [];
+    counts.forEach((b, c) => {
+      const nt = Math.max(1, Math.ceil(b / per));
+      for (let t = 0; t < nt; t++) towers.push({ c, count: Math.max(0, Math.min(per, b - t * per)), ccu: t === 0 });
     });
-    const bat = { items, more: Math.max(0, nBat - items.length) };
-    let ccu;
-    if (row.items.length) {
-      const nt = row.items.length, total = Math.max(nCcu, 0), shown = Math.min(total, nt + 2), cs = [];
-      for (let i = 0; i < shown; i++) {
-        const j = Math.min(i, nt - 1), t = row.items[j], lvl = i - j;
-        cs.push({ x: t.x, y: t.y - (cnt[j] * SCENE.lift + lvl * SCENE.ccuH) * t.s, s: t.s, j });
-      }
-      ccu = { items: cs, more: total - shown };
-    } else ccu = sceneRow(nCcu, SCENE.ccu);
+    const row = sceneRow(towers.length, SCENE.battery), items = [], cs = [];
+    row.items.forEach((pos, j) => {
+      const tw = towers[j];
+      for (let l = 0; l < tw.count; l++) items.push({ x: pos.x, y: pos.y - l * SCENE.lift * pos.s, s: pos.s, j, l });
+      if (tw.ccu) cs.push({ x: pos.x, y: pos.y - tw.count * SCENE.lift * pos.s, s: pos.s, j });
+    });
+    const total = counts.reduce((x, y) => x + y, 0);
+    const bat = { items, more: Math.max(0, total - items.length) };
+    const ccu = { items: cs, more: Math.max(0, nc - cs.length) };
     const all = [...bat.items, ...ccu.items];
     const right = Math.max(...all.map((i) => i.x)), xs = right - 8, first = bat.items.filter((q) => q.j === 0).pop() || ccu.items[0];
     return {
-      key: `${nCcu}x${nBat}`,
+      key: `${nCcu}x${nBat}:${(perCcu || []).join(",")}`,
       bat, ccu,
       paths: {
         grid: SCENE.gridWire,
@@ -468,36 +468,34 @@
 
     // Anzahl der CCUs und Speicher: aus der Konfiguration (ccus, storages) oder aus den Geräten in Home Assistant.
     _counts() {
-      let nC = Number(this._config.ccus) || 0, nB = Number(this._config.storages) || 0;
+      let nC = Number(this._config.ccus) || 0, nB = Number(this._config.storages) || 0, perCcu = null;
       if (!nC || !nB) {
         const { byDev } = this._index();
         const ids = this._mode() === "ccu" ? [this._device()] : this._devices().filter((d) => !d.total).map((d) => d.id);
+        const per = ids.map((id) => {
+          const eid = byDev.get(`${id}|battery_count`), st = eid && this._hass && this._hass.states[eid], v = st ? Number(st.state) : NaN;
+          return Number.isFinite(v) && v > 0 ? Math.round(v) : 1;
+        });
         if (!nC) nC = Math.max(1, ids.length);
-        if (!nB) {
-          let sum = 0;
-          for (const id of ids) {
-            const eid = byDev.get(`${id}|battery_count`), st = eid && this._hass && this._hass.states[eid], v = st ? Number(st.state) : NaN;
-            sum += Number.isFinite(v) && v > 0 ? v : 1;
-          }
-          nB = Math.max(1, sum);
-        }
+        if (!nB) nB = Math.max(1, per.reduce((x, y) => x + y, 0));
+        if (!this._config.ccus && !this._config.storages && per.length === nC) perCcu = per;
       }
-      return [Math.min(nC, 12), Math.min(nB, 24)];
+      return [Math.min(nC, 12), Math.min(nB, 24), perCcu && perCcu.length <= 12 ? perCcu : null];
     }
 
     // Szene neu aufbauen, wenn sich die Anzahl der Geräte ändert.
     _syncScene() {
       if (!this._built || !this._hass) return;
-      const [nC, nB] = this._counts(), key = `${nC}x${nB}`;
+      const [nC, nB, perCcu] = this._counts(), key = `${nC}x${nB}:${(perCcu || []).join(",")}`;
       if (key === this._sceneKey) return;
       this._sceneKey = key;
-      this.shadowRoot.getElementById("house").innerHTML = this._sceneInner(sceneLayout(nC, nB));
+      this.shadowRoot.getElementById("house").innerHTML = this._sceneInner(sceneLayout(nC, nB, perCcu));
       this._applyLayout();
       this._update();
     }
 
     _houseSvg() {
-      this._sceneKey = "1x1";
+      this._sceneKey = "1x1:";
       return `<svg viewBox="0 0 400 316" id="house" role="img" aria-label="Haus mit Zähler, CCU und Speicher">${this._sceneInner(sceneLayout(1, 1))}</svg>`;
     }
 

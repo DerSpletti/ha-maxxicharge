@@ -3,6 +3,10 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.9.6] – 2026-11-18
+### Behoben
+- **Karte:** In der Gesamtübersicht standen bei mehreren CCUs alle CCUs übereinander auf einem Turm. Jede CCU sitzt jetzt auf ihren eigenen Speichern.
+
 ## [0.9.5] – 2026-11-18
 ### Geändert
 - **Karte:** Neues Hausbild mit CCU und Speicher nach den Hersteller-Modellen. Die Szene passt sich an die Zahl der CCUs und Speicher an (oder an die Optionen `ccus` und `storages`): bis zu drei Speicher stehen übereinander, weitere daneben, die CCU sitzt oben auf dem Turm.
