@@ -3,6 +3,11 @@
 Alle wichtigen Änderungen an diesem Projekt. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.9.5] – 2026-11-18
+### Geändert
+- **Karte:** Neues Hausbild mit CCU und Speicher nach den Hersteller-Modellen. Die Szene passt sich an die Zahl der CCUs und Speicher an (oder an die Optionen `ccus` und `storages`): bis zu drei Speicher stehen übereinander, weitere daneben, die CCU sitzt oben auf dem Turm.
+- **Karte:** Verlaufsdiagramm mit gemeinsamer Achse, geglätteten Linien und Fadenkreuz mit Werten.
+
 ## [0.9.4] – 2026-11-08
 ### Geändert
 - **Hinweis zu den Voraussetzungen** oben in README (deutsch und englisch): nur für die Maxxisun CCU mit aktivierter MQTT-Schnittstelle (Firmware ab 2.42.103), MQTT wird in der Maxxisun-App unter Smart Home Integration eingeschaltet; inoffiziell.

@@ -153,6 +153,8 @@ title: Maxxicharge                        # leer = Gerätename
 hours: 3                                  # Zeitraum des Verlaufs in Stunden
 pv_max: 4000                              # Skala der Balken in W (optional)
 house_max: 3000
+ccus: 2                                  # Anzahl der CCUs im Hausbild (optional, sonst automatisch)
+storages: 4                               # Anzahl der Speicher im Hausbild (optional, sonst automatisch)
 ccu_max: 2300
 ```
 Ist der **Umschalter** an, stehen oben in der Karte Reiter für „Maxxicharge Gesamt“ und jede CCU. Ein Klick wechselt die Anzeige direkt in der

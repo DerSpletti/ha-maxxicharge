@@ -1,0 +1,78 @@
+<!doctype html><meta charset=utf-8><style>html,body{margin:0;background:transparent}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
+<script type="module">
+import * as T from 'three';
+const q=new URLSearchParams(location.search), az=+(q.get('az')||-18), el=+(q.get('el')||32), W=1600, H=1600, R=400, UP=q.get('up')||'y';
+const data=await (await fetch(q.get('mesh'))).json();
+const r=new T.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});r.setSize(W,H);r.setPixelRatio(1);
+r.toneMapping=T.ACESFilmicToneMapping;r.outputColorSpace=T.SRGBColorSpace;r.toneMappingExposure=+(new URLSearchParams(location.search).get('exp')||1.25);document.body.appendChild(r.domElement);
+const s=new T.Scene(),g0=new T.Group(),g=new T.Group();g0.add(g);s.add(g0);
+const lin=(v)=>new T.Color().setRGB(v,v,v,T.SRGBColorSpace);
+const rgbp=(k,d)=>{const v=(q.get(k)||d).split(',').map(Number);if(v.length===1)v.push(v[0],v[0]);return new T.Color().setRGB(v[0],v[1],v[2],T.SRGBColorSpace);};
+const WALL=rgbp('wall','0.345,0.345,0.385'),FIN=rgbp('fin','0.02'),SEAM=rgbp('seam','0.02'),LID=rgbp('lid','0.04');
+function triColor(g,fn){const g2=g.toNonIndexed(),pos=g2.attributes.position,col=new Float32Array(pos.count*3);
+ for(let t=0;t<pos.count;t+=3){const cx=(pos.getX(t)+pos.getX(t+1)+pos.getX(t+2))/3,cy=(pos.getY(t)+pos.getY(t+1)+pos.getY(t+2))/3,cz=(pos.getZ(t)+pos.getZ(t+1)+pos.getZ(t+2))/3;const c=fn(cx,cy,cz);
+  for(let k=0;k<3;k++){col[3*(t+k)]=c.r;col[3*(t+k)+1]=c.g;col[3*(t+k)+2]=c.b;}}
+ g2.setAttribute('color',new T.BufferAttribute(col,3));return g2;}
+for(const m of data){let geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(m.p,3));geo.setIndex(m.i);geo.computeVertexNormals();
+ let mat;
+ if(!m.c){geo=triColor(geo,(x,y,z)=>y>1.5?FIN:(y<-72?SEAM:WALL));mat=new T.MeshStandardMaterial({color:0xffffff,vertexColors:true,metalness:.3,roughness:.55,side:T.DoubleSide});}
+ else{const isW=m.c[0]===0.352&&m.c[1]===0.352;
+  const xs=[],ys=[];for(let k=0;k<m.p.length;k+=3){xs.push(m.p[k]);ys.push(m.p[k+1]);}const xmn=Math.min(...xs),xmx=Math.max(...xs),ymx=Math.max(...ys);
+  if(q.get('bat')&&Math.abs(xmn+12.5)<1&&Math.abs(xmx-12.5)<1&&ymx>176&&ymx<178){mat=new T.MeshStandardMaterial({color:0xd5d9de,metalness:.95,roughness:.22,side:T.DoubleSide});}
+  else if(isW&&q.get('bat')){geo=triColor(geo,(x,y,z)=>(z>333||z<-58)?LID:WALL);mat=new T.MeshStandardMaterial({color:0xffffff,vertexColors:true,metalness:.25,roughness:.5,side:T.DoubleSide});}
+  else{const c=isW?WALL:new T.Color().setRGB(...m.c,T.SRGBColorSpace);mat=new T.MeshStandardMaterial({color:c,metalness:.3,roughness:.55,side:T.DoubleSide});}}
+ g.add(new T.Mesh(geo,mat));}
+function screenTex(){const w=1180,h=260,c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');
+ x.fillStyle='#000';x.fillRect(0,0,w,h);x.fillStyle=x.strokeStyle='#fff';x.lineWidth=7;x.lineJoin='round';
+ const txt=(t,px,py,sz,col)=>{x.fillStyle=col||'#fff';x.font='700 '+sz+'px sans-serif';x.fillText(t,px,py);};
+ // Solarmodul 0 W
+ x.beginPath();x.moveTo(60,110);x.lineTo(200,110);x.lineTo(185,40);x.lineTo(75,40);x.closePath();x.fillStyle='#fff';x.fill();
+ x.strokeStyle='#000';x.lineWidth=5;for(let i=1;i<3;i++){x.beginPath();x.moveTo(75+i*37,40);x.lineTo(60+i*47,110);x.stroke();}x.beginPath();x.moveTo(67,75);x.lineTo(193,75);x.stroke();
+ x.strokeStyle='#fff';x.lineWidth=7;x.beginPath();x.moveTo(130,110);x.lineTo(130,128);x.stroke();
+ txt('0 W',225,92,44);
+ // Akku 0 Wh
+ x.lineWidth=7;x.strokeRect(70,160,115,52);x.fillRect(185,175,10,22);txt('0 Wh',225,205,44);
+ // Haus mit Blitz 0 W
+ x.beginPath();x.moveTo(470,95);x.lineTo(535,40);x.lineTo(600,95);x.lineWidth=8;x.stroke();x.strokeRect(485,92,100,36);
+ x.beginPath();x.moveTo(545,70);x.lineTo(525,102);x.lineTo(545,102);x.lineTo(530,126);x.lineWidth=6;x.stroke();txt('0 W',620,100,44);
+ // Euro 0 %
+ x.beginPath();x.arc(505,185,34,0,7);x.lineWidth=7;x.stroke();txt('€',488,200,44);txt('0 %',560,200,44);
+ // Maxxisun-Haus mit grünem Dreieck
+ x.beginPath();x.moveTo(840,100);x.lineTo(935,28);x.lineTo(1030,100);x.lineWidth=10;x.stroke();x.beginPath();x.moveTo(862,92);x.lineTo(862,142);x.lineTo(1008,142);x.lineTo(1008,92);x.stroke();
+ x.fillStyle='#35c24a';x.beginPath();x.moveTo(935,70);x.lineTo(970,122);x.lineTo(900,122);x.closePath();x.fill();
+ x.fillStyle='#e8eef0';x.fillRect(830,165,95,44);x.fillStyle='#35c24a';x.fillRect(925,165,100,44);txt('Maxxi',836,200,36,'#10181c');txt('sun',932,200,36,'#fff');
+ txt('v1.1.0',1070,215,26,'#fff');
+ const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.anisotropy=8;return t;}
+if(q.get('ccu')){const cx=0,cy=-38,z=176.4;
+ const pw=296,ph=64,rx=46,ry=ph/2,sh=new T.Shape();sh.moveTo(-pw/2+rx,-ry);sh.lineTo(pw/2-rx,-ry);sh.absellipse(pw/2-rx,0,rx,ry,-Math.PI/2,Math.PI/2,false);sh.lineTo(-pw/2+rx,ry);sh.absellipse(-pw/2+rx,0,rx,ry,Math.PI/2,Math.PI*1.5,false);
+ const glass=new T.Mesh(new T.ShapeGeometry(sh,48),new T.MeshStandardMaterial({color:0x0b0e11,roughness:.07,metalness:.6}));glass.position.set(cx,cy,z);g.add(glass);
+ const tex=screenTex(),scr=new T.Mesh(new T.PlaneGeometry(180,41),new T.MeshStandardMaterial({color:0x000000,map:tex,emissive:0xffffff,emissiveMap:tex,emissiveIntensity:.85,roughness:.2}));scr.position.set(cx+14,cy,z+.25);g.add(scr);}
+function batTex(){const w=600,h=300,c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');
+ x.fillStyle='#000';x.fillRect(0,0,w,h);const B='#eef3f6';x.fillStyle=x.strokeStyle=B;x.shadowColor='#cfe4ff';x.shadowBlur=10;
+ x.font='700 74px monospace';x.fillText('0',70,125);x.font='700 28px sans-serif';x.fillText('W',120,125);x.font='700 22px sans-serif';x.fillText('INPUT',58,190);
+ x.font='700 74px monospace';x.fillText('0',470,125);x.font='700 28px sans-serif';x.fillText('W',515,125);x.font='700 22px sans-serif';x.fillText('OUTPUT',450,190);
+ x.lineWidth=12;x.beginPath();x.arc(300,115,74,0,6.28);x.stroke();x.font='700 78px monospace';x.textAlign='center';x.fillText('48',296,142);x.font='700 28px sans-serif';x.fillText('%',372,120);
+ x.font='700 44px monospace';x.fillText('2506',284,236);x.font='700 20px sans-serif';x.fillText('Wh',366,236);x.textAlign='left';
+ x.shadowColor='#ff7a30';x.fillStyle='#ff7a30';x.beginPath();x.moveTo(510,250);x.lineTo(536,250);x.lineTo(523,226);x.closePath();x.fill();x.beginPath();x.arc(80,240,12,0,6.28);x.fill();
+ const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.anisotropy=8;return t;}
+function logoTex(){const w=1320,h=184,c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.clearRect(0,0,w,h);
+ x.fillStyle='#c9cbcd';x.fillRect(40,64,150,56);x.fillStyle='#3aa335';x.fillRect(190,64,100,56);
+ x.font='800 40px sans-serif';x.textBaseline='middle';x.fillStyle='#202428';x.fillText('Maxxi',50,93);x.fillStyle='#eaf6ea';x.fillText('sun',198,93);
+ x.fillStyle='#2fae38';x.beginPath();x.moveTo(360,86);x.lineTo(1240,86);x.lineTo(1300,98);x.lineTo(1240,98);x.lineTo(360,98);x.closePath();x.fill();
+ const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.anisotropy=8;return t;}
+if(q.get('bat')){const tex=batTex(),pl=new T.Mesh(new T.PlaneGeometry(112,54),new T.MeshStandardMaterial({color:0x000000,map:tex,emissive:0xffffff,emissiveMap:tex,emissiveIntensity:.9,roughness:.2,side:T.DoubleSide}));
+ pl.rotation.x=-Math.PI/2;pl.rotation.z=Math.PI;pl.position.set(0,175.4,235.2);g.add(pl);
+
+ const lt=logoTex(),lg=new T.Mesh(new T.PlaneGeometry(330,46),new T.MeshStandardMaterial({color:0xffffff,map:lt,transparent:true,roughness:.5,emissive:0xffffff,emissiveMap:lt,emissiveIntensity:.25,side:T.DoubleSide}));lg.rotation.x=-Math.PI/2;lg.rotation.z=Math.PI;lg.position.set(0,175.3,315);g.add(lg);}
+const bb=new T.Box3().setFromObject(g),ctr=bb.getCenter(new T.Vector3());g.position.sub(ctr);
+g0.rotation.order='YXZ';if(UP==='z')g0.rotation.x=-Math.PI/2;g0.rotation.y=(+(q.get('rot')||0))*Math.PI/180;g0.updateMatrixWorld(true);
+const cam=new T.OrthographicCamera(-R,R,R,-R,1,R*10);
+const a=az*Math.PI/180,e=el*Math.PI/180;cam.position.set(Math.sin(a)*Math.cos(e),Math.sin(e),Math.cos(a)*Math.cos(e)).multiplyScalar(R*3);cam.lookAt(0,0,0);cam.updateMatrixWorld(true);
+s.add(new T.HemisphereLight(0xfffaf4,0x66625e,+(q.get('hemi')||1.9)));
+const d=new T.DirectionalLight(0xffffff,2.6);d.position.set(+(q.get('kx')||-0.9),2,2).multiplyScalar(R);s.add(d);
+const d2=new T.DirectionalLight(0xeef2ff,1.0);d2.position.set(2,.5,-1).multiplyScalar(R);s.add(d2);
+r.render(s,cam);
+const A=(k)=>{const v=(q.get(k)||'0,0,0').split(',').map(Number);const p=g.localToWorld(new T.Vector3(...v)).project(cam);return [(p.x+1)/2*W,(1-p.y)/2*H];};
+window.__done=JSON.stringify({foot:A('foot'),top:A('top')});
+</script>
